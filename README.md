@@ -1,4 +1,11 @@
+
 # NAPA Olympic Analytics Platform
+
+## License and Use
+
+This repository is provided as an instructional template for DSB6000 Data Science Strategy & Leadership. Students enrolled in the course may copy and modify the template for their assigned team project. Redistribution, commercial use, or publication outside the course requires permission from the instructor.
+
+See `LICENSE.md` for details.
 
 **Purpose:** This repository is a professional starting scaffold for student consulting teams building the DSB6000 NAPA Olympic Analytics Platform case study. It provides structure, documentation templates, and placeholder files only; teams must design, implement, validate, and explain their own pipeline logic, analytical methods, outputs, and recommendations.
 
