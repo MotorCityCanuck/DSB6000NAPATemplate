@@ -15,6 +15,7 @@ available_datasets:
     manifest_file: manifest.json
     bronze_schema: replace_with_prefix_napa_5k_clean_bronze
     silver_schema: replace_with_prefix_napa_5k_clean_silver
+    silver_reject_schema: replace_with_prefix_napa_5k_clean_silver_reject
     gold_schema: replace_with_prefix_napa_5k_clean_gold
 
   napa_5k_tainted:
@@ -25,6 +26,7 @@ available_datasets:
     manifest_file: manifest.json
     bronze_schema: replace_with_prefix_napa_5k_tainted_bronze
     silver_schema: replace_with_prefix_napa_5k_tainted_silver
+    silver_reject_schema: replace_with_prefix_napa_5k_tainted_silver_reject
     gold_schema: replace_with_prefix_napa_5k_tainted_gold
 
   napa_50k_clean:
@@ -35,6 +37,7 @@ available_datasets:
     manifest_file: manifest.json
     bronze_schema: replace_with_prefix_napa_50k_clean_bronze
     silver_schema: replace_with_prefix_napa_50k_clean_silver
+    silver_reject_schema: replace_with_prefix_napa_50k_clean_silver_reject
     gold_schema: replace_with_prefix_napa_50k_clean_gold
 
   napa_50k_tainted:
@@ -45,6 +48,7 @@ available_datasets:
     manifest_file: manifest.json
     bronze_schema: replace_with_prefix_napa_50k_tainted_bronze
     silver_schema: replace_with_prefix_napa_50k_tainted_silver
+    silver_reject_schema: replace_with_prefix_napa_50k_tainted_silver_reject
     gold_schema: replace_with_prefix_napa_50k_tainted_gold
 
   napa_250k_production:
@@ -53,8 +57,9 @@ available_datasets:
     raw_volume_path: /Volumes/replace_with_catalog/replace_with_prefix_napa_250k_raw/napa_files
     raw_file_count: 13
     manifest_file: manifest.json
-    bronze_schema: replace_with_prefix_napa_250k_production_bronze
-    silver_schema: replace_with_prefix_napa_250k_production_silver
+    bronze_schema: replace_with_prefix_napa_250k_bronze
+    silver_schema: replace_with_prefix_napa_250k_silver
+    silver_reject_schema: replace_with_prefix_napa_250k_silver_reject
     gold_schema: replace_with_prefix_napa_250k_production_gold
 
 run:
