@@ -12,7 +12,7 @@ The division of responsibility is intentional:
 
 1. **Raw → Bronze:** Use the supplied `docs/raw_to_bronze_prompt.md` with Codex to construct the prescribed ingestion pipeline.
 2. **Bronze → Silver:** Once Bronze tables exist, review and use `docs/bronze_to_silver_prompt.md` to construct the shared, quality-controlled analytical foundation.
-3. **Silver → Gold:** Your **team designs the analytical approach and its own Codex prompts** for features, comparisons, rankings, and recommendations. Codex can help implement your decisions.
+3. **Silver → Gold:** Your **team designs the analytical approach and its own Codex prompts** for features, comparisons, selection methods, and recommendations. Codex can help implement your decisions.
 
 The two construction prompts are detailed contracts, not completed code. Review, test, and explain what your AI assistant produces. The team is free to propose justified changes, but must understand their impact.
 
@@ -62,6 +62,12 @@ The two construction prompts are detailed contracts, not completed code. Review,
 
 **One codebase, five configurations.** Do not construct five separate Bronze programs or five separate Silver programs. Each pipeline accepts the `dataset_profile` parameter and writes only to that profile's designated schemas.
 
+## Project milestones
+
+1. **Milestone 1 — Foundation and Initial Engineering:** Establish the development environment, team workflow, and dataset access. Load and validate all five Raw dataset profiles, then implement the Bronze layer for both 5K profiles.
+2. **Milestone 2 — Data Engineering and Quality:** Complete Bronze and Silver processing for all five profiles. Apply the prescribed data-quality and transformation requirements.
+3. **Milestone 3 — Analytics and Recommendations:** Develop the Gold layer and analytics using the available datasets. Use the 250K production dataset to support final Olympic roster recommendations, development-camp recommendations, and executive deliverables.
+
 ## Dataset profiles and recommended test order
 
 | Order | `dataset_profile` | Purpose | Input condition |
@@ -71,6 +77,8 @@ The two construction prompts are detailed contracts, not completed code. Review,
 | 3 | `napa_50k_clean` | Validate on more substantial data | Clean |
 | 4 | `napa_50k_tainted` | Test quality handling at larger scale | Low-level injected defects |
 | 5 | `napa_250k_production` | Production-scale analysis and final recommendations | Tainted production case data |
+
+The 5K and 50K datasets each have separate **clean** and **tainted** profiles. The 250K production dataset is **tainted** and has no separate clean profile.
 
 Each profile is an **independent full historical dataset**, not the next monthly increment of the previous profile. Its player-scale label is approximate; the accompanying manifest is the authority for actual file counts. Complete **Bronze, then Silver, then acceptance checks** for one profile before advancing to the next. Your team's final Gold conclusions should use the 250K production Silver dataset.
 
@@ -145,7 +153,7 @@ Gold is **team-designed** and should use a distinct schema. The Silver layer ret
 4. **Deploy and run Bronze.** Validate/deploy the Databricks Asset Bundle manually; run the selected profile and inspect the job status, 13 Bronze tables, manifest reconciliation, and operations evidence. Fix problems and repeat the review/run cycle.
 5. **Build Silver only after Bronze is ready.** Have Codex read `docs/bronze_to_silver_prompt.md`, implement the transformations/quality logic, and repeat GitHub review, manual deployment, execution, and acceptance checks.
 6. **Repeat for all five profiles** in the order above, changing **only configuration/parameters**, except where verified defects require a code correction.
-7. **Design Gold as a team.** Decide the business questions, scoring/ranking methods, eligibility approach, partnership evaluation, and uncertainty handling; write your own Codex prompts to build and test those analytical products.
+7. **Design Gold as a team.** Decide the business questions, scoring and selection methods, eligibility approach, partnership evaluation, and uncertainty handling; write your own Codex prompts to build and test those analytical products.
 8. **Prepare the RFP response.** Use your Gold evidence to recommend teams and explain your reasoning to the NAPA evaluation committee.
 
 Typical commands after your bundle is configured, reviewed, and deployed (the job names come from the supplied prompts):
@@ -222,7 +230,7 @@ Use the documentation templates that are actually present in the repository:
 | `docs/dataset_specification.md`, `docs/data_dictionary.md` | Source/field understanding |
 | `docs/data_quality_rules.md`, `docs/data_quality_report.md` | Rules, findings, rejects, and implications |
 | `docs/lineage.md`, `docs/governance.md` | Provenance, stewardship, and control decisions |
-| `docs/analytical_methodology.md` | Team-defined Gold features, evidence, validation, ranking methods |
+| `docs/analytical_methodology.md` | Team-defined Gold features, evidence, validation, and selection methods |
 | `docs/ai_usage_summary.md` | AI contributions, human review, and lessons |
 | `docs/runbook.md` | Actual setup, parameters, runs, issues, fixes |
 
