@@ -1,0 +1,12 @@
+bundle:
+  name: napa_olympic_analytics
+
+# Each consulting team must replace this placeholder with its shared Databricks workspace URL.
+# Team members authenticate individually using the Databricks CLI.
+# Designate one deployment coordinator to deploy approved changes from the GitHub main branch.
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://REPLACE_WITH_TEAM_WORKSPACE_URL
