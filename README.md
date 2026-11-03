@@ -226,7 +226,7 @@ Use the documentation templates that are actually present in the repository:
 
 | File | What to record |
 |---|---|
-| `docs/architecture.md`, `docs/medallion_design.md` | Pipeline architecture and selected namespaces |
+| `docs/architecture.md` | Pipeline architecture and selected namespaces |
 | `docs/dataset_specification.md`, `docs/data_dictionary.md` | Source/field understanding |
 | `docs/data_quality_rules.md`, `docs/data_quality_report.md` | Rules, findings, rejects, and implications |
 | `docs/lineage.md`, `docs/governance.md` | Provenance, stewardship, and control decisions |

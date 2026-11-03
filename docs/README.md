@@ -6,8 +6,7 @@
 |---|---|---|
 | assignment_context.md | Capture the business scenario, stakeholder needs, and team interpretation of the client ask. | At project start and whenever scope interpretation changes. |
 | dataset_specification.md | Record dataset release strategy, source file expectations, and validation responsibilities. | Before ingestion and after any source validation findings. |
-| architecture.md | Document the proposed technical architecture and tool roles. | After major design decisions or workflow changes. |
-| medallion_design.md | Explain Raw, Bronze, Silver, and Gold layer intent and scope. | When medallion design or milestone evidence changes. |
+| architecture.md | Document the consolidated technical architecture, layer responsibilities, and tool roles. | After major design decisions or workflow changes. |
 | data_dictionary.md | Define important tables, fields, and business meanings. | After schema discovery and whenever entities change. |
 | data_quality_rules.md | Define planned data quality checks and severity expectations. | Before rule implementation and when rules change. |
 | data_quality_report.md | Summarize run-specific quality findings and confidence impact. | After each milestone run or major validation cycle. |
