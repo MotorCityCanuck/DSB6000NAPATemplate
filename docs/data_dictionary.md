@@ -749,7 +749,221 @@ Appendix B supplies exact field names and order but deliberately does not establ
 
 ## Silver Exceptions and Operational Structures
 
-Reserved for the prescribed exception-table contract, quality evidence, reconciliation, schema snapshots, and run metadata. A later stage will distinguish specification from executed pipeline evidence.
+This task documents the prescribed Silver exception outputs only. The Bronze-to-Silver construction prompt is authoritative. Silver operational evidence tables, grouped quality summaries, reconciliation, schema snapshots, and run metadata remain outside this section and will be documented separately.
+
+### Exception-output inventory
+
+Each accepted Silver target has one corresponding `<target_table>_exceptions` Delta table in the selected profile's Silver reject schema. Every table uses the same ordered 17-field projection documented below, including when the result is empty. The record grain is one rejected Bronze source-row occurrence with its selected diagnostic evidence. Repeated or duplicate source occurrences remain separately represented; no exception-table primary key is prescribed.
+
+| Exception table | Bronze source entity | Affected accepted Silver target | Purpose | Record grain | Field count | Verification status |
+|---|---|---|---|---|---:|---|
+| `monthly_batches_exceptions` | `monthly_batches` | `monthly_batches` | Preserve rejected batch occurrences and their diagnostic disposition | One rejected `monthly_batches` source occurrence | 17 | Prescribed |
+| `regions_exceptions` | `regions` | `regions` | Preserve rejected region occurrences and their diagnostic disposition | One rejected `regions` source occurrence | 17 | Prescribed |
+| `players_exceptions` | `player_master` | `players` | Preserve rejected player occurrences and their diagnostic disposition | One rejected `player_master` source occurrence | 17 | Prescribed |
+| `clubs_exceptions` | `clubs` | `clubs` | Preserve rejected club occurrences and their diagnostic disposition | One rejected `clubs` source occurrence | 17 | Prescribed |
+| `teams_exceptions` | `teams` | `teams` | Preserve rejected persistent-team occurrences and their diagnostic disposition | One rejected `teams` source occurrence | 17 | Prescribed |
+| `player_registrations_exceptions` | `player_registrations` | `player_registrations` | Preserve rejected registration occurrences and their diagnostic disposition | One rejected `player_registrations` source occurrence | 17 | Prescribed |
+| `player_assessment_history_exceptions` | `player_assessment_history` | `player_assessment_history` | Preserve rejected assessment occurrences and their diagnostic disposition | One rejected `player_assessment_history` source occurrence | 17 | Prescribed |
+| `club_memberships_exceptions` | `club_memberships` | `club_memberships` | Preserve rejected club-membership occurrences and their diagnostic disposition | One rejected `club_memberships` source occurrence | 17 | Prescribed |
+| `team_memberships_exceptions` | `team_memberships` | `team_memberships` | Preserve rejected team-membership occurrences and their diagnostic disposition | One rejected `team_memberships` source occurrence | 17 | Prescribed |
+| `matches_exceptions` | `matches` | `matches` | Preserve rejected match occurrences and their diagnostic disposition | One rejected `matches` source occurrence | 17 | Prescribed |
+| `match_teams_exceptions` | `match_teams` | `match_teams` | Preserve rejected match-side occurrences and their diagnostic disposition | One rejected `match_teams` source occurrence | 17 | Prescribed |
+| `match_team_players_exceptions` | `match_team_players` | `match_team_players` | Preserve rejected match-participant occurrences and their diagnostic disposition | One rejected `match_team_players` source occurrence | 17 | Prescribed |
+| `match_games_exceptions` | `match_games` | `match_games` | Preserve rejected game occurrences and their diagnostic disposition | One rejected `match_games` source occurrence | 17 | Prescribed |
+
+### Shared exception field contract — all 13 tables
+
+The construction prompt prescribes exact field names and order but does not prescribe Spark physical types, precision, or physical nullability. Those details are **Unresolved** pending authoritative clarification or implementation-schema evidence.
+
+| Order | Field | Meaning | Prescribed source or derivation | Physical type | Physical nullability | Verification status |
+|---:|---|---|---|---|---|---|
+| 1 | `source_table` | Bronze source entity associated with the rejected occurrence | Transformation source context | Unresolved | Unresolved | Prescribed |
+| 2 | `target_table` | Accepted Silver target from which the occurrence was excluded | Transformation target context | Unresolved | Unresolved | Prescribed |
+| 3 | `source_business_key` | Source business-key value used to identify the occurrence when available | Normalized or diagnostic source key context | Unresolved | Unresolved | Prescribed |
+| 4 | `reject_reason` | Rejection reason code or category assigned to the occurrence | First prescribed rejection disposition for the occurrence | Unresolved | Unresolved | Prescribed |
+| 5 | `reject_reason_code` | Compatibility repetition of `reject_reason` | Copies `reject_reason` as explicitly prescribed | Unresolved | Unresolved | Prescribed |
+| 6 | `reject_reason_detail` | Human-readable or diagnostic detail about the rejection | Table/rule-specific diagnostic context | Unresolved | Unresolved | Prescribed |
+| 7 | `rule_id` | Identifier of the prescribed rule producing the disposition | Applicable table-specific or shared rule | Unresolved | Unresolved | Prescribed |
+| 8 | `rule_severity` | Severity assigned to the applicable rule | Prescribed rule metadata | Unresolved | Unresolved | Prescribed |
+| 9 | `failed_source_column` | Source column associated with the failed check, when applicable | Conversion or validation evidence | Unresolved | Unresolved | Prescribed |
+| 10 | `failed_source_value` | Original offending source value, when applicable | Preserved before failed conversion or validation | Unresolved | Unresolved | Prescribed |
+| 11 | `pipeline_run_id` | Pipeline-run identifier for operational traceability | Current Silver run context | Unresolved | Unresolved | Prescribed |
+| 12 | `_pipeline_run_id` | Duplicate run identifier retained for compatibility and traceability | Current Silver run context | Unresolved | Unresolved | Prescribed |
+| 13 | `_source_dataset` | Selected source dataset or release | Current release context | Unresolved | Unresolved | Prescribed |
+| 14 | `load_ts` | Exception-load timestamp for operational traceability | Current exception-write context | Unresolved | Unresolved | Prescribed |
+| 15 | `_load_ts` | Duplicate load timestamp retained for compatibility and traceability | Current exception-write context | Unresolved | Unresolved | Prescribed |
+| 16 | `source_record_json` | JSON representation of selected source and diagnostic fields | Transformation-selected diagnostic projection; not guaranteed to contain the complete Bronze row | Unresolved | Unresolved | Prescribed |
+| 17 | `_record_hash` | SHA-256 fingerprint of `source_record_json` | Hash of the prescribed diagnostic JSON representation | Unresolved | Unresolved | Prescribed |
+
+No primary or foreign key is prescribed for an exception table. `source_business_key` supports identification but is not guaranteed unique, especially for duplicate-key defects or repeated source occurrences. Bronze remains the complete unchanged source evidence when `source_record_json` contains only the selected diagnostic projection.
+
+### High-level rejection semantics
+
+- A null in a required source field is represented with `MISSING_REQUIRED_VALUE`; a missing required physical column is instead a technical preflight failure and does not become an ordinary record-level exception.
+- A populated required reference absent from the original Bronze parent dataset is represented with `INVALID_FOREIGN_KEY`.
+- A reference whose parent exists in Bronze but was rejected from accepted Silver is represented with `PARENT_REJECTED`.
+- Other prescribed failures—including malformed values, invalid domains or intervals, duplicate primary keys, and table-specific structural defects—retain their applicable reason, rule, severity, failed-column/value, and diagnostic JSON evidence without inventing replacement data.
+- The first prescribed rejection reason determines the occurrence's exception disposition unless the construction prompt explicitly requires additional evidence. Positive rejection counts do not independently make the pipeline execution fail.
+
+Rejected occurrences are excluded from the corresponding accepted Silver table and written to its exception table. Every original Bronze occurrence must reconcile to exactly one accepted occurrence or one rejected exception occurrence; diagnostic subsets must not be added again to that total.
+
+### Profile-specific namespace separation
+
+| Dataset profile | Accepted Silver schema setting | Silver reject schema setting |
+|---|---|---|
+| `napa_5k_clean` | `replace_with_prefix_napa_5k_clean_silver` | `replace_with_prefix_napa_5k_clean_silver_reject` |
+| `napa_5k_tainted` | `replace_with_prefix_napa_5k_tainted_silver` | `replace_with_prefix_napa_5k_tainted_silver_reject` |
+| `napa_50k_clean` | `replace_with_prefix_napa_50k_clean_silver` | `replace_with_prefix_napa_50k_clean_silver_reject` |
+| `napa_50k_tainted` | `replace_with_prefix_napa_50k_tainted_silver` | `replace_with_prefix_napa_50k_tainted_silver_reject` |
+| `napa_250k_production` | `replace_with_prefix_napa_250k_silver` | `replace_with_prefix_napa_250k_silver_reject` |
+
+The values above are configurable placeholders, not verified deployed schemas. Accepted entities belong in the profile-specific `silver_schema`; exceptions belong in the corresponding profile-specific `silver_reject_schema`; shared operational evidence belongs in the separately configured `<team_prefix>_ops` schema. Rejected rows are not retained in accepted Silver tables, and exception tables are not substitutes for shared operational quality or reconciliation evidence.
+
+No exception schema, table, field, or behavior in this section is marked **Physically verified** or **Implementation verified**. Refer to `docs/bronze_to_silver_prompt.md` for detailed rule order, identifiers, transformations, SQL, execution behavior, and acceptance tests.
+
+## Silver Operational Evidence Contracts
+
+The Bronze-to-Silver construction prompt prescribes six managed Delta evidence tables in the shared, configurable `<team_prefix>_ops` schema. They are separate from the five unprefixed Raw-to-Bronze operations tables already documented above: Silver reuses the shared operations **namespace**, not the Bronze tables or their field contracts. Silver may also consult upstream Raw-to-Bronze run evidence during source preflight without rewriting it.
+
+All contracts below are **Prescribed** and have not been marked **Physically verified** or **Implementation verified**. The prompt specifies field order and broad type conventions, but delegates exact DDL and per-column nullability to the implementation. Consequently, physical nullability is **Unresolved** for every field. Required run context, statuses, and timestamps must not be silently null, but the prompt does not identify the exact `NOT NULL` columns. `threshold_value` also has no prescribed physical type and remains **Unresolved**.
+
+### Evidence-structure inventory
+
+| Prescribed table | Purpose | Record grain | Field count | Principal relationships | Verification status |
+|---|---|---|---:|---|---|
+| `b2s_pipeline_runs` | Record Silver workflow context, state, timing, and terminal errors | One run-state record for a Silver pipeline run; normally an open record is finalized, with a terminal record permitted when no open record exists | 14 | `pipeline_run_id` links all Silver run evidence; `release_name` identifies the selected profile/release | Prescribed |
+| `b2s_table_runs` | Record table-build execution and accepted/rejected publication counts | One execution-state record per run and source/target build; separate `RUNNING` and terminal records are appended | 18 | Links a Bronze `source_table`, accepted Silver `target_table`, run, and build stage | Prescribed |
+| `b2s_quality_results` | Record grouped rejection evidence and prescribed cross-table validation results | One run-scoped result for a target table and quality rule evaluation | 13 | Links the evaluated target and rule to the run/release; sampled keys provide diagnostic evidence, not a table key | Prescribed |
+| `b2s_reconciliation_results` | Reconcile each Bronze source with its accepted and rejected Silver occurrences | One result per run and independently reconciled source/target pair | 12 | Links Bronze source, accepted Silver target, reject counts, and run/release | Prescribed |
+| `b2s_schema_snapshots` | Record the ordered physical schema observed for a Silver object | One field observation per run, layer, table, and column ordinal | 10 | Links a field/schema hash to the run, release, layer, and table | Prescribed |
+| `b2s_run_messages` | Retain structured operational diagnostics and terminal messages | One message event for a run and optional target context | 7 | Links message evidence to the run/release and, when applicable, target table | Prescribed |
+
+No primary or foreign keys, retention periods, or additional uniqueness constraints are prescribed for these tables. The single generated `pipeline_run_id` is the common traceability value passed across tasks and evidence records.
+
+### `b2s_pipeline_runs` fields
+
+| Order | Field | Prescribed type | Meaning | Verification status |
+|---:|---|---|---|---|
+| 1 | `pipeline_run_id` | `STRING` | UUID identifying one Silver workflow run | Prescribed |
+| 2 | `pipeline_name` | `STRING` | Silver pipeline name | Prescribed |
+| 3 | `pipeline_version` | `STRING` | Version of the Silver pipeline implementation | Prescribed |
+| 4 | `release_name` | `STRING` | Selected dataset profile or release | Prescribed |
+| 5 | `processing_mode` | `STRING` | Configured Silver execution mode, including full refresh | Prescribed |
+| 6 | `configuration_hash` | `STRING` | Fingerprint of the resolved run configuration | Prescribed |
+| 7 | `workflow_run_id` | `STRING` | Databricks workflow-run identifier when available | Prescribed |
+| 8 | `status` | `STRING` | Run lifecycle or terminal status | Prescribed |
+| 9 | `started_ts` | `TIMESTAMP` | UTC-aware run start timestamp | Prescribed |
+| 10 | `completed_ts` | `TIMESTAMP` | UTC-aware run completion timestamp | Prescribed |
+| 11 | `duration_seconds` | `DOUBLE` | Elapsed run duration in seconds | Prescribed |
+| 12 | `triggered_by` | `STRING` | Trusted trigger identity or context when available | Prescribed |
+| 13 | `error_class` | `STRING` | Terminal error class when the run fails | Prescribed |
+| 14 | `error_message` | `STRING` | Terminal error summary when the run fails | Prescribed |
+
+### `b2s_table_runs` fields
+
+| Order | Field | Prescribed type | Meaning | Verification status |
+|---:|---|---|---|---|
+| 1 | `pipeline_run_id` | `STRING` | Silver pipeline-run identifier | Prescribed |
+| 2 | `release_name` | `STRING` | Selected dataset profile or release | Prescribed |
+| 3 | `source_table` | `STRING` | Bronze source table for the build | Prescribed |
+| 4 | `target_table` | `STRING` | Accepted Silver target table | Prescribed |
+| 5 | `build_stage` | `STRING` | Prescribed build-stage label | Prescribed |
+| 6 | `build_order` | `INT` | Position in the prescribed build order | Prescribed |
+| 7 | `status` | `STRING` | Table-build lifecycle or terminal status | Prescribed |
+| 8 | `started_ts` | `TIMESTAMP` | UTC-aware table-build start timestamp | Prescribed |
+| 9 | `completed_ts` | `TIMESTAMP` | UTC-aware table-build completion timestamp | Prescribed |
+| 10 | `duration_seconds` | `DOUBLE` | Elapsed table-build duration in seconds | Prescribed |
+| 11 | `source_row_count` | `BIGINT` | Bronze source occurrence count evaluated | Prescribed |
+| 12 | `exact_duplicate_count` | `BIGINT` | Diagnostic count of exact duplicate occurrences | Prescribed |
+| 13 | `duplicate_key_rejected_count` | `BIGINT` | Diagnostic count of duplicate-key rejected occurrences | Prescribed |
+| 14 | `accepted_row_count` | `BIGINT` | Occurrences written to the accepted Silver target | Prescribed |
+| 15 | `rejected_row_count` | `BIGINT` | Occurrences written to the corresponding exception table | Prescribed |
+| 16 | `warning_count` | `BIGINT` | Warning findings recorded for the build | Prescribed |
+| 17 | `published_row_count` | `BIGINT` | Rows published to the accepted target | Prescribed |
+| 18 | `error_message` | `STRING` | Table-build error summary when applicable | Prescribed |
+
+### `b2s_quality_results` fields
+
+| Order | Field | Prescribed type | Meaning | Verification status |
+|---:|---|---|---|---|
+| 1 | `pipeline_run_id` | `STRING` | Silver pipeline-run identifier | Prescribed |
+| 2 | `release_name` | `STRING` | Selected dataset profile or release | Prescribed |
+| 3 | `target_table` | `STRING` | Silver target associated with the evaluation | Prescribed |
+| 4 | `rule_id` | `STRING` | Prescribed validation-rule identifier | Prescribed |
+| 5 | `rule_type` | `STRING` | Rule classification | Prescribed |
+| 6 | `severity` | `STRING` | Prescribed finding severity | Prescribed |
+| 7 | `evaluated_row_count` | `BIGINT` | Denominator count evaluated by the rule | Prescribed |
+| 8 | `failed_row_count` | `BIGINT` | Count that failed the rule | Prescribed |
+| 9 | `failure_pct` | `DOUBLE` | Failed percentage; null when the denominator is zero | Prescribed |
+| 10 | `threshold_value` | Unresolved | Threshold representation when a rule has one; no physical type is prescribed | Prescribed concept; physical type Unresolved |
+| 11 | `status` | `STRING` | Validation-result status | Prescribed |
+| 12 | `sample_business_keys` | `ARRAY<STRING>` | Up to ten sorted sampled business keys for diagnostic evidence | Prescribed |
+| 13 | `evaluated_ts` | `TIMESTAMP` | UTC-aware evaluation timestamp | Prescribed |
+
+### `b2s_reconciliation_results` fields
+
+| Order | Field | Prescribed type | Meaning | Verification status |
+|---:|---|---|---|---|
+| 1 | `pipeline_run_id` | `STRING` | Silver pipeline-run identifier | Prescribed |
+| 2 | `release_name` | `STRING` | Selected dataset profile or release | Prescribed |
+| 3 | `source_table` | `STRING` | Bronze source table reconciled | Prescribed |
+| 4 | `target_table` | `STRING` | Accepted Silver target table | Prescribed |
+| 5 | `bronze_row_count` | `BIGINT` | Original Bronze source occurrence count | Prescribed |
+| 6 | `exact_duplicate_count` | `BIGINT` | Diagnostic exact-duplicate subset | Prescribed |
+| 7 | `duplicate_key_rejected_count` | `BIGINT` | Diagnostic duplicate-key rejection subset | Prescribed |
+| 8 | `rejected_row_count` | `BIGINT` | Rejected occurrence count | Prescribed |
+| 9 | `accepted_row_count` | `BIGINT` | Accepted occurrence count | Prescribed |
+| 10 | `reconciliation_difference` | `BIGINT` | Bronze count minus accepted and rejected counts | Prescribed |
+| 11 | `status` | `STRING` | `MATCHED` or mismatch result, including required schema/column checks | Prescribed |
+| 12 | `evaluated_ts` | `TIMESTAMP` | UTC-aware reconciliation timestamp | Prescribed |
+
+### `b2s_schema_snapshots` fields
+
+| Order | Field | Prescribed type | Meaning | Verification status |
+|---:|---|---|---|---|
+| 1 | `pipeline_run_id` | `STRING` | Silver pipeline-run identifier | Prescribed |
+| 2 | `release_name` | `STRING` | Selected dataset profile or release | Prescribed |
+| 3 | `layer_name` | `STRING` | Layer associated with the observed object | Prescribed |
+| 4 | `table_name` | `STRING` | Observed Silver table | Prescribed |
+| 5 | `column_name` | `STRING` | Observed field name | Prescribed |
+| 6 | `data_type` | `STRING` | Observed physical field type representation | Prescribed |
+| 7 | `nullable` | `BOOLEAN` | Observed physical field-nullability flag | Prescribed |
+| 8 | `ordinal_position` | `INT` | One-based field position | Prescribed |
+| 9 | `schema_hash` | `STRING` | SHA-256 of the ordered schema representation prescribed by the prompt | Prescribed |
+| 10 | `captured_ts` | `TIMESTAMP` | UTC-aware schema-capture timestamp | Prescribed |
+
+### `b2s_run_messages` fields
+
+| Order | Field | Prescribed type | Meaning | Verification status |
+|---:|---|---|---|---|
+| 1 | `pipeline_run_id` | `STRING` | Silver pipeline-run identifier | Prescribed |
+| 2 | `release_name` | `STRING` | Selected dataset profile or release | Prescribed |
+| 3 | `target_table` | `STRING` | Related target table when the message is table-specific | Prescribed |
+| 4 | `message_level` | `STRING` | Diagnostic message level | Prescribed |
+| 5 | `message_code` | `STRING` | Prescribed structured message code | Prescribed |
+| 6 | `message_text` | `STRING` | Human-readable diagnostic text without secrets or full sensitive records | Prescribed |
+| 7 | `created_ts` | `TIMESTAMP` | UTC-aware message timestamp | Prescribed |
+
+### Evidence responsibilities and namespace boundaries
+
+- **Full-refresh traceability:** `b2s_pipeline_runs`, `b2s_table_runs`, and `b2s_run_messages` connect the selected profile, configuration, workflow state, targeted reset/build activity, and terminal result to one run ID. A successful full refresh requires complete run-scoped execution evidence; quality findings alone do not determine execution success.
+- **Accepted and rejected counts:** `b2s_table_runs` records source, accepted, rejected, warning, and published counts. Rejection subsets such as duplicate-key and parent-rejection counts remain diagnostic subsets and are not added again during reconciliation.
+- **Source-to-target reconciliation:** `b2s_reconciliation_results` records all 13 independent Bronze-to-Silver reconciliations. Each Bronze occurrence must appear once as accepted or rejected; unexplained differences and required schema/column mismatches are technical failures.
+- **Referential integrity and quality:** `b2s_quality_results` records grouped reject evidence and prescribed cross-table checks, including referential-integrity outcomes. Detailed rules and rejection decisions remain in the construction prompt and the profile-specific exception outputs.
+- **Acceptance and schema evidence:** `b2s_schema_snapshots`, quality results, reconciliation results, table-run completion records, and structured messages collectively support the completion gate. They document evidence; they do not prove a run succeeded until implementation execution is verified.
+
+Accepted Silver tables remain in the selected profile's configured `silver_schema`; rejected occurrences remain in its `silver_reject_schema`; all six `b2s_*` tables remain in the shared `<team_prefix>_ops` schema. The five Raw-to-Bronze operations tables coexist there under their unprefixed names and retain their existing contracts.
+
+### Non-table operational evidence
+
+| Mechanism | Prescribed evidence | Contract boundary | Verification status |
+|---|---|---|---|
+| Databricks task values | The resolve task publishes `run_id`; every downstream task receives that same value, and finalization exposes `final_status` | Physical types, durability, and retention are not prescribed; task values do not replace managed operations evidence | Prescribed concept; physical representation Unresolved |
+| Databricks job/task state | Workflow and task status, run ID, and dependency outcomes provide execution context, including finalization with `ALL_DONE` | A successful deployment or task state alone does not prove data correctness or production certification | Prescribed concept; implementation evidence not verified |
+| Runtime diagnostics | Propagated exceptions and job output provide failure context when managed audit storage is unavailable or incomplete | The prompt prescribes visible failure behavior but no separate log-table schema or retention contract | Prescribed concept; physical representation Unresolved |
+| Post-run validation record | Teams capture configuration hash, table/reject counts, reconciliation, quality evidence, views, and job/task status after each profile run | The prompt does not prescribe an additional managed table for this handoff record | Prescribed concept; physical representation Unresolved |
+
+Refer to `docs/bronze_to_silver_prompt.md` for detailed rule logic, message codes, execution procedures, finalization behavior, and acceptance tests. Refer to `docs/data_quality_report.md` for the team-maintained report of actual findings and downstream impacts.
 
 ## Gold Analytical Definitions — Team Maintained
 
