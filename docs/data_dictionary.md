@@ -255,9 +255,171 @@ Source: `monthly_batches.parquet`. Grain: one monthly batch or snapshot period. 
 | `rating_update_count` | `INT64` (source count) | Optional under prescribed contract | None specified | Source count of rating updates associated with the batch period | Unit is rating updates; update definition, inclusion criteria, and valid range are unresolved | Prescribed | Appendix A ordered columns and source count type-family statement |
 | `assessment_update_count` | `INT64` (source count) | Optional under prescribed contract | None specified | Source count of assessment updates associated with the batch period | Unit is assessment updates; update definition, inclusion criteria, and valid range are unresolved | Prescribed | Appendix A ordered columns and source count type-family statement |
 
-## Bronze Metadata and Operational Evidence
+## Bronze Entity and Metadata Contracts
 
-Reserved for the prescribed Bronze metadata columns and operational evidence structures. A later stage will document their definitions and verification status without duplicating the full Raw-to-Bronze construction prompt.
+The Raw-to-Bronze construction prompt is authoritative for this section. These entries describe the prescribed contract; they do not establish that a team's generated Bronze tables have been physically or implementation verified. The contract applies independently to all five dataset profiles.
+
+### Common business-field preservation contract
+
+For every entity below, Bronze retains every delivered Parquet business column in its original order and appends the ten metadata columns listed in the next section. Bronze does not rename source fields, change their stored types or representations, standardize values, cleanse, filter, join, sort, deduplicate, or derive business features. Nulls, invalid business values, relationships, and duplicate rows remain as delivered. Casts used to calculate `_source_record_hash` apply only inside that expression and do not change stored business columns.
+
+The existing [Source Field Dictionary](#source-field-dictionary) records the prescribed source contracts without repeating all 112 definitions here. The delivered Parquet schemas and manifest remain the physical evidence for actual column names, order, types, and nullability. Any difference between that evidence and the prescribed source dictionary must be recorded rather than silently normalized in Bronze. `manifest.json` is validation evidence and is not a Bronze entity.
+
+### Bronze entity coverage
+
+| Build order | Raw source and source-dictionary reference | Corresponding Bronze entity | Prescribed business-field handling | Verification status |
+|---:|---|---|---|---|
+| 10 | `regions.parquet` — [`regions`](#regions) | `regions` | Apply the common preservation contract; no field rename, stored-type change, or removal is prescribed | Prescribed |
+| 20 | `clubs.parquet` — [`clubs`](#clubs) | `clubs` | Apply the common preservation contract; no field rename, stored-type change, or removal is prescribed | Prescribed |
+| 30 | `club_memberships.parquet` — [`club_memberships`](#club_memberships) | `club_memberships` | Apply the common preservation contract; no field rename, stored-type change, or removal is prescribed | Prescribed |
+| 40 | `player_master.parquet` — [`player_master`](#player_master) | `player_master` | Apply the common preservation contract; no field rename, stored-type change, or removal is prescribed | Prescribed |
+| 50 | `player_registrations.parquet` — [`player_registrations`](#player_registrations) | `player_registrations` | Apply the common preservation contract; no field rename, stored-type change, or removal is prescribed | Prescribed |
+| 60 | `player_assessment_history.parquet` — [`player_assessment_history`](#player_assessment_history) | `player_assessment_history` | Apply the common preservation contract; no field rename, stored-type change, or removal is prescribed | Prescribed |
+| 70 | `teams.parquet` — [`teams`](#teams) | `teams` | Apply the common preservation contract; no field rename, stored-type change, or removal is prescribed | Prescribed |
+| 80 | `team_memberships.parquet` — [`team_memberships`](#team_memberships) | `team_memberships` | Apply the common preservation contract; no field rename, stored-type change, or removal is prescribed | Prescribed |
+| 90 | `matches.parquet` — [`matches`](#matches) | `matches` | Apply the common preservation contract; no field rename, stored-type change, or removal is prescribed | Prescribed |
+| 100 | `match_teams.parquet` — [`match_teams`](#match_teams) | `match_teams` | Apply the common preservation contract; no field rename, stored-type change, or removal is prescribed | Prescribed |
+| 110 | `match_team_players.parquet` — [`match_team_players`](#match_team_players) | `match_team_players` | Apply the common preservation contract; no field rename, stored-type change, or removal is prescribed | Prescribed |
+| 120 | `match_games.parquet` — [`match_games`](#match_games) | `match_games` | Apply the common preservation contract; no field rename, stored-type change, or removal is prescribed | Prescribed |
+| 130 | `monthly_batches.parquet` — [`monthly_batches`](#monthly_batches) | `monthly_batches` | Apply the common preservation contract; no field rename, stored-type change, or removal is prescribed | Prescribed |
+
+### Required Bronze metadata fields
+
+All ten columns are mandatory on every Bronze entity and are appended after the original business columns in the order shown. A source collision with any reserved metadata name is a construction failure. “Required column” below does not assert `NOT NULL` unless the prompt explicitly establishes value nullability.
+
+| Order | Field name | Intended meaning | Applicable Bronze entities | Required or optional status | Prescribed type or representation | Verification status |
+|---:|---|---|---|---|---|---|
+| 1 | `_pipeline_run_id` | UUID identifying the shared Raw-to-Bronze workflow run | All 13 | Required column; physical nullability unresolved | UUID value from the shared run context; exact Spark type unresolved | Prescribed |
+| 2 | `_pipeline_name` | Configured pipeline name that produced the row | All 13 | Required column; physical nullability unresolved | Configured value; exact Spark type unresolved | Prescribed |
+| 3 | `_pipeline_version` | Configured version of the producing pipeline | All 13 | Required column; physical nullability unresolved | Configured value; exact Spark type unresolved | Prescribed |
+| 4 | `_release_name` | Selected configured dataset release/profile context | All 13 | Required column; physical nullability unresolved | Shared run-context value; exact Spark type unresolved | Prescribed |
+| 5 | `_source_file_name` | Name of the Parquet file from which the row was read | All 13 | Required column; physical nullability unresolved | File-readiness value; exact Spark type unresolved | Prescribed |
+| 6 | `_source_file_path` | Actual source path used for the Parquet read, including a `dbfs:` prefix when present | All 13 | Required column; physical nullability unresolved | File-readiness value; exact Spark type unresolved | Prescribed |
+| 7 | `_source_file_size` | Available size of the source Parquet file | All 13 | Required column; value may be unavailable; exact nullability handling unresolved | File-readiness value; physical units and exact Spark type are not explicitly prescribed | Prescribed |
+| 8 | `_source_file_modification_ts` | Available source-file modification time normalized to UTC | All 13 | Required column; missing modification times remain null | UTC-aware timestamp concept; exact Spark type unresolved | Prescribed |
+| 9 | `_ingested_ts` | Bronze table's UTC ingestion start time | All 13 | Required column; the workflow supplies a value; physical nullability unresolved | UTC-aware timestamp concept; exact Spark type unresolved | Prescribed |
+| 10 | `_source_record_hash` | SHA-256 fingerprint calculated from all original source columns in source order | All 13 | Required column; physical nullability unresolved | Cast each source value to string only inside the hash expression, replace null with `__NULL__`, join with `||`, and apply SHA-256; exact Spark type unresolved | Prescribed |
+
+The record hash preserves duplicate rows and is not a guaranteed unique key because the encoding does not escape the delimiter or null sentinel. No metadata field has been marked **Physically verified**; verification requires inspection of implemented Bronze tables and execution evidence.
+
+### Documentation boundary and unresolved physical details
+
+This section does not define the separate Raw-to-Bronze operations tables (`pipeline_runs`, `table_runs`, `schema_snapshots`, `reconciliation_results`, or `run_messages`), their run evidence, rejection behavior, acceptance SQL, or job steps. Those operational evidence structures are reserved for a separate task.
+
+The construction prompt does not prescribe exact Spark physical types for the ten Bronze metadata columns or comprehensive `NOT NULL` constraints. It explicitly permits a missing source-file modification timestamp to remain null and describes source-file size as captured when available, but does not fully specify size units or fallback/null handling. These details remain **Unresolved** until clarified by an authoritative specification or physically verified implementation evidence.
+
+## Bronze Operational Evidence Contracts
+
+The Raw-to-Bronze construction prompt prescribes five managed Delta evidence tables in the configured operations schema. The exact deployed catalog and schema are team-configured and have not been physically verified. All entries below are **Prescribed** unless stated otherwise; no primary keys, foreign keys, retention periods, or additional constraints are implied beyond the prompt's exact type and nullability contract. In the field tables, “Required” means the prompt marks the column `NOT NULL`; “Nullable” means it does not.
+
+### Evidence structure inventory
+
+| Prescribed structure | Purpose and record grain | Identifying fields and relationships | Field count | Verification status |
+|---|---|---|---:|---|
+| `pipeline_runs` | Pipeline-run lifecycle evidence; normally one open run record is finalized, with a terminal fallback record possible when no open record exists | `pipeline_run_id` identifies the workflow run and relates it to every other operations table; no primary-key constraint is prescribed | 14 | Prescribed |
+| `table_runs` | Per-source Bronze build-state evidence; separate `RUNNING` and terminal records are appended for each source table | Relates a run, release, source file/entity, and Bronze target through `pipeline_run_id`, `release_name`, `source_file_name`, `source_table`, and `target_table`; no primary key is prescribed | 17 | Prescribed |
+| `schema_snapshots` | One captured field definition per run, layer, and Raw or Bronze object | Relates schema evidence to a run and release; Raw `object_name` is the source filename and Bronze `object_name` is the unqualified Bronze table name | 11 | Prescribed |
+| `reconciliation_results` | One Raw-to-Bronze reconciliation result per source/target for a pipeline run | Relates a run and release to `source_file_name` and `bronze_table`; no primary key is prescribed | 13 | Prescribed |
+| `run_messages` | One diagnostic message event associated with a run and optionally a source | Relates messages to `pipeline_run_id`, `release_name`, and optional `source_name`; no primary key is prescribed | 8 | Prescribed |
+
+### `pipeline_runs` fields
+
+| Order | Field name | Prescribed type | Nullability | Meaning | Verification status |
+|---:|---|---|---|---|---|
+| 1 | `pipeline_run_id` | `STRING` | Required | UUID identifying the Raw-to-Bronze workflow run | Prescribed |
+| 2 | `pipeline_name` | `STRING` | Required | Configured pipeline name | Prescribed |
+| 3 | `pipeline_version` | `STRING` | Required | Configured pipeline version | Prescribed |
+| 4 | `release_name` | `STRING` | Required | Configured release processed by the run | Prescribed |
+| 5 | `processing_mode` | `STRING` | Required | Processing mode used by the run | Prescribed |
+| 6 | `configuration_hash` | `STRING` | Required | Reproducible hash of the resolved configuration | Prescribed |
+| 7 | `workflow_run_id` | `STRING` | Nullable | Trustworthy external workflow-run identifier when available | Prescribed |
+| 8 | `status` | `STRING` | Required | Pipeline lifecycle or terminal status | Prescribed |
+| 9 | `started_ts` | `TIMESTAMP` | Required | UTC-normalized pipeline start timestamp | Prescribed |
+| 10 | `completed_ts` | `TIMESTAMP` | Nullable | UTC-normalized pipeline completion timestamp | Prescribed |
+| 11 | `duration_seconds` | `DOUBLE` | Nullable | Elapsed run duration in seconds | Prescribed |
+| 12 | `triggered_by` | `STRING` | Nullable | Trustworthy trigger identity or context when available | Prescribed |
+| 13 | `error_class` | `STRING` | Nullable | Error classification for a failed run | Prescribed |
+| 14 | `error_message` | `STRING` | Nullable | Run-level error summary | Prescribed |
+
+### `table_runs` fields
+
+| Order | Field name | Prescribed type | Nullability | Meaning | Verification status |
+|---:|---|---|---|---|---|
+| 1 | `pipeline_run_id` | `STRING` | Required | Identifier of the parent pipeline run | Prescribed |
+| 2 | `pipeline_name` | `STRING` | Required | Configured pipeline name | Prescribed |
+| 3 | `release_name` | `STRING` | Required | Configured release processed | Prescribed |
+| 4 | `source_file_name` | `STRING` | Required | Raw Parquet filename | Prescribed |
+| 5 | `source_table` | `STRING` | Required | Configured source entity name | Prescribed |
+| 6 | `target_table` | `STRING` | Required | Corresponding Bronze target table | Prescribed |
+| 7 | `status` | `STRING` | Required | Build-state status for this appended record | Prescribed |
+| 8 | `started_ts` | `TIMESTAMP` | Required | UTC-normalized table-build start timestamp | Prescribed |
+| 9 | `completed_ts` | `TIMESTAMP` | Nullable | UTC-normalized terminal timestamp; null on the appended start record | Prescribed |
+| 10 | `duration_seconds` | `DOUBLE` | Nullable | Elapsed table-build duration in seconds | Prescribed |
+| 11 | `source_file_size` | `BIGINT` | Nullable | Available source-file size | Prescribed |
+| 12 | `source_row_count` | `BIGINT` | Nullable | Count of Raw source rows | Prescribed |
+| 13 | `bronze_row_count` | `BIGINT` | Nullable | Count of Bronze rows captured during construction | Prescribed |
+| 14 | `row_count_difference` | `BIGINT` | Nullable | Bronze row count minus Raw row count | Prescribed |
+| 15 | `source_schema_hash` | `STRING` | Nullable | Hash of the ordered Raw source schema | Prescribed |
+| 16 | `bronze_schema_hash` | `STRING` | Nullable | Hash of the ordered Bronze schema | Prescribed |
+| 17 | `error_message` | `STRING` | Nullable | Source-table build error summary | Prescribed |
+
+### `schema_snapshots` fields
+
+| Order | Field name | Prescribed type | Nullability | Meaning | Verification status |
+|---:|---|---|---|---|---|
+| 1 | `pipeline_run_id` | `STRING` | Required | Identifier of the parent pipeline run | Prescribed |
+| 2 | `pipeline_name` | `STRING` | Required | Configured pipeline name | Prescribed |
+| 3 | `release_name` | `STRING` | Required | Configured release represented by the snapshot | Prescribed |
+| 4 | `layer_name` | `STRING` | Required | Layer represented by the snapshot, such as Raw or Bronze | Prescribed |
+| 5 | `object_name` | `STRING` | Required | Raw source filename or unqualified Bronze table name, according to layer | Prescribed |
+| 6 | `column_name` | `STRING` | Required | Captured field name | Prescribed |
+| 7 | `data_type` | `STRING` | Required | Captured Spark `simpleString()` field type | Prescribed |
+| 8 | `nullable` | `BOOLEAN` | Nullable | Captured source or table field-nullability value | Prescribed |
+| 9 | `ordinal_position` | `INT` | Nullable | One-based field position in the captured schema | Prescribed |
+| 10 | `schema_hash` | `STRING` | Required | Hash representing the full ordered schema | Prescribed |
+| 11 | `captured_ts` | `TIMESTAMP` | Required | Timestamp when schema evidence was captured | Prescribed |
+
+### `reconciliation_results` fields
+
+| Order | Field name | Prescribed type | Nullability | Meaning | Verification status |
+|---:|---|---|---|---|---|
+| 1 | `pipeline_run_id` | `STRING` | Required | Identifier of the parent pipeline run | Prescribed |
+| 2 | `pipeline_name` | `STRING` | Required | Configured pipeline name | Prescribed |
+| 3 | `release_name` | `STRING` | Required | Configured release reconciled | Prescribed |
+| 4 | `source_file_name` | `STRING` | Required | Raw Parquet filename reconciled | Prescribed |
+| 5 | `bronze_table` | `STRING` | Required | Corresponding Bronze table | Prescribed |
+| 6 | `raw_row_count` | `BIGINT` | Required | Persisted Raw row count used for reconciliation | Prescribed |
+| 7 | `bronze_row_count` | `BIGINT` | Required | Persisted Bronze row count used for reconciliation | Prescribed |
+| 8 | `row_count_difference` | `BIGINT` | Required | Bronze row count minus Raw row count | Prescribed |
+| 9 | `raw_business_column_count` | `INT` | Required | Number of Raw business columns | Prescribed |
+| 10 | `bronze_business_column_count` | `INT` | Required | Number of Bronze business columns, excluding appended metadata | Prescribed |
+| 11 | `metadata_column_count` | `INT` | Required | Number of appended Bronze metadata columns | Prescribed |
+| 12 | `status` | `STRING` | Required | Reconciliation result status | Prescribed |
+| 13 | `evaluated_ts` | `TIMESTAMP` | Required | Timestamp when reconciliation was evaluated | Prescribed |
+
+### `run_messages` fields
+
+| Order | Field name | Prescribed type | Nullability | Meaning | Verification status |
+|---:|---|---|---|---|---|
+| 1 | `pipeline_run_id` | `STRING` | Required | Identifier of the related pipeline run | Prescribed |
+| 2 | `pipeline_name` | `STRING` | Required | Configured pipeline name | Prescribed |
+| 3 | `release_name` | `STRING` | Required | Configured release associated with the message | Prescribed |
+| 4 | `source_name` | `STRING` | Nullable | Source entity associated with the message, when applicable | Prescribed |
+| 5 | `message_level` | `STRING` | Required | Diagnostic message severity or level | Prescribed |
+| 6 | `message_code` | `STRING` | Required | Diagnostic message code | Prescribed |
+| 7 | `message_text` | `STRING` | Required | Human-readable diagnostic text | Prescribed |
+| 8 | `created_ts` | `TIMESTAMP` | Required | Timestamp when the message was created | Prescribed |
+
+### Other prescribed evidence channels
+
+| Evidence channel or concept | Prescribed content | Physical contract status | Verification status |
+|---|---|---|---|
+| Manifest and Raw-readiness comparison evidence | Expected and actual manifest values, mismatch type, source file, selected dataset profile, release identifier, and pipeline-run identifier | No additional table name, exact field names, types, nullability, or storage representation are prescribed; these details are **Unresolved** | Prescribed concept; physical representation Unresolved |
+| Bronze table catalog metadata | A Raw-preserving table comment plus `napa.layer=bronze`, `napa.release=<release>`, `napa.pipeline=raw_to_bronze`, and `napa.processing_mode=full_refresh` properties on each Bronze Delta table | Comment template and property names/values are prescribed; deployed catalog representation and verification remain unresolved | Prescribed; not physically verified |
+| Databricks task values | Runtime handoff and diagnostics using `run_id`, `pipeline_run_id`, `release_name`, `config_hash`, `catalog`, `raw_schema`, `bronze_schema`, `source_path`, `operations_schema_fqn`, `bronze_table_count`, `reconciled_source_count`, and `final_status`, as applicable | Keys are prescribed, but physical types, durability, retention, and table representation are not prescribed | Prescribed concept; physical representation Unresolved |
+| Job-log failure diagnostics | Root-cause traceback and available failure diagnostics, including publication or cleanup failures | Platform log schema, field names, types, storage, and retention are not prescribed | Prescribed concept; physical representation Unresolved |
+
+Raw-to-Bronze prescribes no rejected-record or defect-row table: Bronze preserves all source rows and does not apply business-rule rejection. Technical validation and publication defects are represented through statuses, error fields, run messages, the required but physically unresolved validation evidence, and job logs where available. This dictionary describes evidence structure only; `docs/raw_to_bronze_prompt.md` remains authoritative for validation rules, diagnostic codes, failure behavior, execution steps, job topology, and acceptance checks.
 
 ## Silver Entities and Field Definitions
 
