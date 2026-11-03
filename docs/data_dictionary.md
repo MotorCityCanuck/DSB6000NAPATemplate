@@ -50,7 +50,54 @@ The purposes and grains below come from `docs/dataset_specification.md`. Keys an
 
 ## Source Field Dictionary
 
-Reserved for field-level source definitions. A later stage will record prescribed column names and then distinguish them from profile-specific physical types, nullability, units, domains, and evidence. No individual source fields are populated in this stage.
+The following field contracts come from Appendix A of `docs/bronze_to_silver_prompt.md` and apply to all five dataset profiles. They are **Prescribed**, not physically verified. Type families are stated only when Appendix A defines them. **Unresolved** identifies a meaning, type, format, domain, unit, or constraint that the authoritative sources do not establish; it must not be inferred from a field name.
+
+### `regions`
+
+Source: `regions.parquet`. Grain: one geographic region. This table provides geographic context for clubs and other entities where the documented relationship is present.
+
+| Field name | Prescribed logical type or family | Required/non-null expectation | Key role | Supported business meaning | Known domain, units, or allowed values | Verification status | Source reference or notes |
+|---|---|---|---|---|---|---|---|
+| `id` | `INT64` (source ID) | Required (prescribed non-null) | Primary key | Identifier for a geographic region | Unresolved — no value range is specified | Prescribed | Appendix A ordered columns, type-family statement, and required-fields table; Raw-to-Bronze source registry |
+| `country_code` | Unresolved | Required (prescribed non-null) | None specified | Source country code for the region | Examples include `US` and `CA`; these are not Silver-standardized `USA` and `CAN`. The complete source domain is unresolved | Prescribed | Appendix A required-fields table and country-value note |
+| `region_type` | Unresolved | Optional under prescribed contract | None specified | Unresolved — the source documents do not define the classification's business semantics | Unresolved — no allowed values are specified | Prescribed | Appendix A ordered columns; all fields not listed as required are nullable |
+| `region_name` | Unresolved | Required (prescribed non-null) | None specified | Name of the geographic region | Unresolved — no naming convention or constrained domain is specified | Prescribed | Appendix A ordered columns and required-fields table; dataset specification |
+| `state_province_code` | Unresolved | Optional under prescribed contract | None specified | Source state or province code retained separately from any Silver canonical geography | Unresolved — no coding scheme or allowed values are specified | Prescribed | Appendix A ordered columns; Silver prompt requires preservation of this source attribute |
+| `population` | `INT64` (source count) | Optional under prescribed contract | None specified | Population measure associated with the region; the measurement basis is unresolved | Unresolved — population basis, reference date, and unit convention are not specified | Prescribed | Appendix A ordered columns and type-family statement |
+| `latitude` | `DECIMAL` (numeric measurement) | Optional under prescribed contract | None specified | Geographic latitude coordinate for the region | Decimal scale 6; precision, bounds, and coordinate reference convention are unresolved | Prescribed | Appendix A ordered columns, type-family statement, and decimal-scale expectation |
+| `longitude` | `DECIMAL` (numeric measurement) | Optional under prescribed contract | None specified | Geographic longitude coordinate for the region | Decimal scale 6; precision, bounds, and coordinate reference convention are unresolved | Prescribed | Appendix A ordered columns, type-family statement, and decimal-scale expectation |
+
+### `clubs`
+
+Source: `clubs.parquet`. Grain: one club or facility. Each club's required `region_id` relates the club to `regions.id`.
+
+| Field name | Prescribed logical type or family | Required/non-null expectation | Key role | Supported business meaning | Known domain, units, or allowed values | Verification status | Source reference or notes |
+|---|---|---|---|---|---|---|---|
+| `id` | `INT64` (source ID) | Required (prescribed non-null) | Primary key | Identifier for a club or facility | Unresolved — no value range is specified | Prescribed | Appendix A ordered columns, type-family statement, and required-fields table; Raw-to-Bronze source registry |
+| `club_name` | Unresolved | Required (prescribed non-null) | None specified | Name of the club or facility | Unresolved — no naming convention or constrained domain is specified | Prescribed | Appendix A ordered columns and required-fields table; dataset specification |
+| `region_id` | `INT64` (source ID) | Required (prescribed non-null) | Foreign key to `regions.id` | Identifies the region associated with the club | Unresolved — no value range is specified | Prescribed | Appendix A ordered columns and required-fields table; Silver parent-key contract |
+| `club_type` | Unresolved | Optional under prescribed contract | None specified | Source classification of the club; detailed semantics are unresolved | Unresolved — no allowed values are specified | Prescribed | Appendix A ordered columns; all fields not listed as required are nullable |
+| `competitiveness_level` | Unresolved | Optional under prescribed contract | None specified | Source competitiveness classification; detailed semantics are unresolved | Unresolved — no scale or allowed values are specified | Prescribed | Appendix A ordered columns; all fields not listed as required are nullable |
+| `member_capacity` | `INT64` (source count) | Optional under prescribed contract | None specified | Membership-capacity measure for the club; the measurement basis is unresolved | Unresolved — capacity basis and valid range are not specified | Prescribed | Appendix A ordered columns and type-family statement |
+| `founding_date` | String-published date | Optional under prescribed contract | None specified | Source date associated with the club's founding | Unresolved — no string format or valid range is specified | Prescribed | Appendix A ordered columns and statement that dates are published as strings |
+| `indoor_court_count` | `INT64` (source count) | Optional under prescribed contract | None specified | Number of indoor courts associated with the club | Count of courts; valid range is unresolved | Prescribed | Appendix A ordered columns and type-family statement |
+| `outdoor_court_count` | `INT64` (source count) | Optional under prescribed contract | None specified | Number of outdoor courts associated with the club | Count of courts; valid range is unresolved | Prescribed | Appendix A ordered columns and type-family statement |
+
+### `club_memberships`
+
+Source: `club_memberships.parquet`. Grain: one player-club membership period. Each record's required `club_id` relates to `clubs.id`, and its required `player_id` relates to `player_master.player_id`.
+
+| Field name | Prescribed logical type or family | Required/non-null expectation | Key role | Supported business meaning | Known domain, units, or allowed values | Verification status | Source reference or notes |
+|---|---|---|---|---|---|---|---|
+| `id` | `INT64` (source ID) | Required (prescribed non-null) | Primary key | Identifier for a player-club membership record | Unresolved — no value range is specified | Prescribed | Appendix A ordered columns, type-family statement, and required-fields table; Raw-to-Bronze source registry |
+| `player_id` | `INT64` (source ID) | Required (prescribed non-null) | Foreign key to `player_master.player_id` | Identifies the player in the membership period | Unresolved — no value range is specified | Prescribed | Appendix A ordered columns and required-fields table; Silver parent-key contract |
+| `club_id` | `INT64` (source ID) | Required (prescribed non-null) | Foreign key to `clubs.id` | Identifies the club in the membership period | Unresolved — no value range is specified | Prescribed | Appendix A ordered columns and required-fields table; Silver parent-key contract |
+| `membership_type` | Unresolved | Optional under prescribed contract | None specified | Source classification of the membership; detailed semantics are unresolved | Unresolved — no allowed values are specified | Prescribed | Appendix A ordered columns; all fields not listed as required are nullable |
+| `joined_date` | String-published date | Required (prescribed non-null) | None specified | Start or joining date for the membership period | Unresolved — no string format or valid range is specified | Prescribed | Appendix A ordered columns, required-fields table, and statement that dates are published as strings; dataset specification grain |
+| `left_date` | String-published date | Optional under prescribed contract | None specified | End or leaving date for the membership period | Unresolved — no string format or valid range is specified | Prescribed | Appendix A ordered columns and statement that dates are published as strings; dataset specification grain |
+| `is_primary` | `BOOLEAN` | Optional under prescribed contract | None specified | Source indicator related to primary club membership; the precise business interpretation is unresolved | `true` or `false` when populated; null is allowed under the prescribed source contract | Prescribed | Appendix A ordered columns, explicit type statement, and nullable-by-default rule |
+
+Field-level definitions for the remaining ten prescribed source tables are intentionally deferred to later stages.
 
 ## Bronze Metadata and Operational Evidence
 
