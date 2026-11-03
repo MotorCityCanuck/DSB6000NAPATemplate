@@ -423,7 +423,329 @@ Raw-to-Bronze prescribes no rejected-record or defect-row table: Bronze preserve
 
 ## Silver Entities and Field Definitions
 
-Reserved for prescribed Silver accepted entities, standardized fields, derived fields, source preservation, transformations, and joins. A later stage will reference the Silver construction prompt and deployed-schema evidence rather than treating expected projections as physically verified.
+The Bronze-to-Silver construction prompt is authoritative for this section. Appendix B supplies the ordered accepted-table projections, and Stages 4–8 establish field origin and meaning. These are **Prescribed** contracts, not physically or implementation-verified schemas. They apply independently to all five dataset profiles.
+
+Appendix B requires every accepted table to contain its ordered business fields followed by the seven shared metadata fields documented below. The prompt states broad type families but requires integration schema tests for exact Spark types and nullability. Accordingly, “required accepted value” describes logical acceptance behavior, not a claimed physical `NOT NULL` constraint; all unprovided physical nullability remains **Unresolved**.
+
+### Accepted Silver entity inventory
+
+| Registry order | Accepted target | Record grain | Bronze source and prescribed enrichment dependencies | Prescribed primary key | Business fields | Total fields including 7 metadata | Status |
+|---:|---|---|---|---|---:|---:|---|
+| 10 | `monthly_batches` | One accepted monthly batch or snapshot period | `monthly_batches` | `batch_id` | 15 | 22 | Prescribed |
+| 20 | `regions` | One accepted geographic region | `regions` | `region_id` | 10 | 17 | Prescribed |
+| 30 | `players` | One accepted current or snapshot player | `player_master`; accepted `regions` for optional home-region enrichment | `player_id` | 27 | 34 | Prescribed |
+| 40 | `clubs` | One accepted club or facility | `clubs`; accepted `regions` | `club_id` | 14 | 21 | Prescribed |
+| 50 | `teams` | One accepted persistent doubles team | `teams` | `team_id` | 12 | 19 | Prescribed |
+| 60 | `player_registrations` | One accepted player registration event | `player_registrations`; accepted `players`, `monthly_batches`, and optional `regions` | `registration_id` | 20 | 27 | Prescribed |
+| 70 | `player_assessment_history` | One accepted player assessment | `player_assessment_history`; accepted `players` and `monthly_batches` | `assessment_id` | 12 | 19 | Prescribed |
+| 80 | `club_memberships` | One accepted player-club membership period | `club_memberships`; accepted `players` and `clubs` | `club_membership_id` | 15 | 22 | Prescribed |
+| 90 | `team_memberships` | One accepted player-team membership period | `team_memberships`; accepted `teams` and `players` | `team_membership_id` | 15 | 22 | Prescribed |
+| 100 | `matches` | One accepted match | `matches`; accepted `monthly_batches`, optional `regions`, and Bronze `match_teams` for winner-side mapping | `match_id` | 17 | 24 | Prescribed |
+| 110 | `match_teams` | One accepted participating match side | `match_teams`; accepted `matches` and `teams` | `match_team_id` | 15 | 22 | Prescribed |
+| 120 | `match_team_players` | One accepted player participation on a match side | `match_team_players`; accepted `match_teams`, `players`, inherited match/team context, and team-membership history for warning evidence | `match_team_player_id` | 16 | 23 | Prescribed |
+| 130 | `match_games` | One accepted game within a match | `match_games`; accepted `matches` | `match_game_id` | 15 | 22 | Prescribed |
+
+The inventory contains 203 ordered business-field occurrences and 91 shared-metadata occurrences, for 294 physical field occurrences across the 13 accepted tables.
+
+### Field-origin and type conventions
+
+- **Source/standardized:** carried from the corresponding Bronze business attribute through a documented canonical rename, alias, normalization, or safe conversion. It is not a Gold feature.
+- **Lookup:** obtained from an accepted parent or a prescribed enrichment source. Foreign surrogate keys are obtained from accepted parents.
+- **Surrogate:** SHA-256 of the table's valid natural key for the entity's own `_sk` field.
+- **Derived:** explicitly calculated by the Silver prompt. Fields whose names begin `derived_` are derived business attributes.
+- **Quality:** a non-rejecting `dq_` indicator required by the prompt.
+- **Metadata:** one of the seven shared accepted-row operational fields.
+
+Natural and foreign identifiers and surrogate keys are `STRING`; typed dates are `DATE`; flags are `BOOLEAN`; ratings, confidence values, assessment values, and score shares are `DOUBLE`; and date parts, sequences, scores, durations, ages, and count-derived values use corresponding SQL integer types. Exact integer widths, other physical types, precision, and physical nullability are unresolved unless the prompt explicitly states otherwise.
+
+### Shared accepted-row metadata — all 13 tables
+
+These seven fields follow each table's ordered business fields. Their exact physical nullability and, except where a type family is explicit, physical types require implementation verification.
+
+| Order after business fields | Field | Origin | Prescribed source or derivation | Intended meaning | Type family | Requirement / role | Status |
+|---:|---|---|---|---|---|---|---|
+| 1 | `_pipeline_run_id` | Metadata | Current Silver pipeline run | Run-level traceability | Identifier (`STRING`) | Required column; physical nullability unresolved | Prescribed |
+| 2 | `_pipeline_version` | Metadata | Current Silver pipeline version | Producing pipeline version | Unresolved | Required column; physical nullability unresolved | Prescribed |
+| 3 | `_source_dataset` | Metadata | Selected release name | Dataset/release provenance | Unresolved | Required column; physical nullability unresolved | Prescribed |
+| 4 | `_source_table` | Metadata | Bronze source name; `player_master` for `players` | Source-entity provenance | Unresolved | Required column; physical nullability unresolved | Prescribed |
+| 5 | `_load_ts` | Metadata | Silver load timestamp | Publication-time traceability | Timestamp concept; exact type unresolved | Required column; physical nullability unresolved | Prescribed |
+| 6 | `_record_hash` | Metadata | SHA-256 over the table-specific ordered hash inputs in Stage 4 | Accepted-record comparison fingerprint | Unresolved | Required column; not proof that every attribute is unchanged | Prescribed |
+| 7 | `_data_quality_status` | Metadata | Constant `ACCEPTED` for accepted rows | Accepted-row disposition | Unresolved categorical type | Required column; remains `ACCEPTED` when separate warning flags are true | Prescribed |
+
+### `monthly_batches` accepted fields
+
+| Order | Field | Origin | Prescribed source or derivation | Intended meaning | Type family | Requirement / relationship | Key or field role | Status |
+|---:|---|---|---|---|---|---|---|---|
+| 1 | `batch_id` | Source/standardized | `monthly_batches.id` (fallback alias supported) | Canonical batch identifier | `STRING` | Required accepted value | Primary key | Prescribed |
+| 2 | `batch_sk` | Surrogate | SHA-256 of `batch_id` | Stable batch surrogate key | `STRING` | Expected for accepted rows; physical nullability unresolved | Entity surrogate key | Prescribed |
+| 3 | `batch_month` | Source/standardized | `batch_month` | Published batch month attribute | Source representation; exact Silver type unresolved | Required source value; physical nullability unresolved | None | Prescribed |
+| 4 | `batch_sequence` | Source/standardized | `batch_sequence` | Batch sequence value | SQL integer family | Required accepted value | None | Prescribed |
+| 5 | `batch_type` | Source/standardized | Uppercased `batch_type` | Batch classification | Categorical; exact type unresolved | Required accepted value | None | Prescribed |
+| 6 | `active_player_count_start` | Source/standardized | `active_player_count_start` | Source active-player count at period start | SQL integer family | Nullable when source contract permits | None | Prescribed |
+| 7 | `new_player_count` | Source/standardized | `new_player_count` | Source new-player count | SQL integer family | Nullable when source contract permits | None | Prescribed |
+| 8 | `active_player_count_end` | Source/standardized | `active_player_count_end` | Source active-player count at period end | SQL integer family | Nullable when source contract permits | None | Prescribed |
+| 9 | `match_count_generated` | Source/standardized | `match_count_generated` | Source generated-match count | SQL integer family | Nullable when source contract permits | None | Prescribed |
+| 10 | `rating_update_count` | Source/standardized | `rating_update_count` | Source rating-update count | SQL integer family | Nullable when source contract permits | None | Prescribed |
+| 11 | `assessment_update_count` | Source/standardized | `assessment_update_count` | Source assessment-update count | SQL integer family | Nullable when source contract permits | None | Prescribed |
+| 12 | `derived_batch_date` | Derived | Parsed batch date from the supported date/month source | Canonical batch-period date | `DATE` | Expected for accepted rows; physical nullability unresolved | Derived field | Prescribed |
+| 13 | `derived_batch_year` | Derived | Year from `derived_batch_date` | Batch year | SQL integer family | Depends on valid derived batch date | Derived field | Prescribed |
+| 14 | `derived_batch_month` | Derived | Month from `derived_batch_date` | Batch month number | SQL integer family | Depends on valid derived batch date | Derived field | Prescribed |
+| 15 | `derived_batch_quarter` | Derived | Quarter from `derived_batch_date` | Batch quarter number | SQL integer family | Depends on valid derived batch date | Derived field | Prescribed |
+
+### `regions` accepted fields
+
+| Order | Field | Origin | Prescribed source or derivation | Intended meaning | Type family | Requirement / relationship | Key or field role | Status |
+|---:|---|---|---|---|---|---|---|---|
+| 1 | `region_id` | Source/standardized | `regions.id` (supported canonical aliases) | Canonical region identifier | `STRING` | Required accepted value | Primary key | Prescribed |
+| 2 | `region_sk` | Surrogate | SHA-256 of `region_id` | Stable region surrogate key | `STRING` | Expected for accepted rows; physical nullability unresolved | Entity surrogate key | Prescribed |
+| 3 | `country_code` | Source/standardized | Normalized source country | Canonical USA/CAN country code | Categorical; exact type unresolved | Required accepted value | None | Prescribed |
+| 4 | `region_type` | Source/standardized | `region_type` | Source region classification | Exact type unresolved | Nullable when source contract permits | None | Prescribed |
+| 5 | `region_name` | Source/standardized | `region_name` (supported name alias) | Region name | Exact type unresolved | Required accepted value | None | Prescribed |
+| 6 | `state_province_code` | Source/standardized | Preserved `state_province_code` | Original state/province code attribute | Exact type unresolved | Nullable when source contract permits | None | Prescribed |
+| 7 | `province_state` | Source/standardized | Supported province/state aliases; canonical mapping must be documented | Canonical province/state attribute | Exact type unresolved | Source availability and exact schema 1.6 mapping unresolved | None | Prescribed |
+| 8 | `population` | Source/standardized | `population` | Source population value | SQL integer family | Nullable when source contract permits | None | Prescribed |
+| 9 | `latitude` | Source/standardized | `latitude` | Source latitude measurement | Numeric measurement; exact Silver type unresolved | Nullable when source contract permits | None | Prescribed |
+| 10 | `longitude` | Source/standardized | `longitude` | Source longitude measurement | Numeric measurement; exact Silver type unresolved | Nullable when source contract permits | None | Prescribed |
+
+### `players` accepted fields
+
+| Order | Field | Origin | Prescribed source or derivation | Intended meaning | Type family | Requirement / relationship | Key or field role | Status |
+|---:|---|---|---|---|---|---|---|---|
+| 1 | `player_id` | Source/standardized | `player_master.player_id` (preferred canonical ID) | Canonical player identifier | `STRING` | Required accepted value | Primary key | Prescribed |
+| 2 | `player_sk` | Surrogate | SHA-256 of `player_id` | Stable player surrogate key | `STRING` | Expected for accepted rows; physical nullability unresolved | Entity surrogate key | Prescribed |
+| 3 | `external_player_key` | Source/standardized | `external_player_key` | External player UUID text | `STRING` | Required source value | Alternate source identifier | Prescribed |
+| 4 | `first_name` | Source/standardized | Trimmed `first_name` | Player first name | Exact type unresolved | Required source value | None | Prescribed |
+| 5 | `last_name` | Source/standardized | Trimmed `last_name` | Player last name | Exact type unresolved | Required source value | None | Prescribed |
+| 6 | `display_name` | Source/standardized | Supplied display/full name when present; otherwise available first/last names | Canonical player display name | Exact type unresolved | Exact physical nullability unresolved | Canonical presentation field | Prescribed |
+| 7 | `gender` | Source/standardized | Normalized `gender` | Player gender domain value | Categorical; exact type unresolved | Nullable when source contract permits | None | Prescribed |
+| 8 | `birth_date` | Source/standardized | Safely parsed `birth_date` | Player birth date | `DATE` | Required accepted value | None | Prescribed |
+| 9 | `dominant_hand` | Source/standardized | Normalized `dominant_hand` | Player dominant-hand value | Categorical; exact type unresolved | Nullable when source contract permits | None | Prescribed |
+| 10 | `home_region_id` | Source/standardized | `home_region_id` | Optional home-region identifier | `STRING` | Nullable optional reference | Foreign identifier to `regions.region_id` | Prescribed |
+| 11 | `home_region_sk` | Lookup | Surrogate key from accepted home region | Accepted home-region surrogate | `STRING` | Nullable when `home_region_id` is null | Foreign surrogate to `regions.region_sk` | Prescribed |
+| 12 | `country_code` | Source/lookup | Normalized supplied country; accepted region fallback only when permitted and source is absent | Canonical player country | Categorical; exact type unresolved | Exact physical nullability unresolved | Optional region enrichment | Prescribed |
+| 13 | `registration_date` | Source/standardized | Safely parsed `registration_date` | Player registration date | `DATE` | Required accepted value | None | Prescribed |
+| 14 | `player_status` | Source/standardized | Normalized `player_status` | Player source status | Categorical; exact type unresolved | Required accepted value | None | Prescribed |
+| 15 | `rating` | Source/standardized | Preserved source `rating` compatibility attribute | Source rating value | `DOUBLE` | Nullable when source contract permits | None | Prescribed |
+| 16 | `rating_value` | Source/standardized | Preserved and safely converted `rating_value` | Canonical source rating value | `DOUBLE` | Nullable when source contract permits | None | Prescribed |
+| 17 | `confidence_score` | Source/standardized | Preserved and safely converted `confidence_score` | Source rating-confidence measurement | `DOUBLE` | Nullable when source contract permits | None | Prescribed |
+| 18 | `rating_confidence` | Source/standardized | Canonical confidence from supported confidence aliases | Canonical rating-confidence measurement | `DOUBLE` | Nullable when no supported value is supplied | None | Prescribed |
+| 19 | `volatility_score` | Source/standardized | `volatility_score` | Source rating-volatility measurement | `DOUBLE` | Nullable when source contract permits | None | Prescribed |
+| 20 | `global_percentile` | Source/standardized | `global_percentile` | Source global-percentile measurement | Numeric measurement; exact Silver type unresolved | Nullable when source contract permits | None | Prescribed |
+| 21 | `match_count_used` | Source/standardized | `match_count_used` | Source count of matches used for rating | SQL integer family | Nullable when source contract permits | None | Prescribed |
+| 22 | `rating_date` | Source/standardized | Safely parsed `rating_date` | Source rating effective date | `DATE` | Nullable when source contract permits | None | Prescribed |
+| 23 | `rating_batch_id` | Source/standardized | `rating_batch_id` | Source batch reference associated with rating | `STRING` | Nullable when source contract permits | Relationship semantics beyond preservation unresolved | Prescribed |
+| 24 | `snapshot_month` | Source/standardized | Parsed `snapshot_month` | Player snapshot month | `DATE` (month-level) | Required accepted value | Snapshot context | Prescribed |
+| 25 | `derived_active_flag` | Derived | Normalized status/active semantics | Current player active indicator | `BOOLEAN` | May be null for unsupported or absent status semantics | Derived field | Prescribed |
+| 26 | `derived_age_at_snapshot` | Derived | Birth date evaluated at manifest snapshot date | Player age at snapshot | SQL integer family | Depends on valid birth and snapshot dates | Derived field | Prescribed |
+| 27 | `derived_age_group_at_snapshot` | Derived | Configured age group for `derived_age_at_snapshot` | Player age group at snapshot | Categorical; exact type unresolved | Depends on derived age | Derived field | Prescribed |
+
+### `player_registrations` accepted fields
+
+| Order | Field | Origin | Prescribed source or derivation | Intended meaning | Type family | Requirement / relationship | Key or field role | Status |
+|---:|---|---|---|---|---|---|---|---|
+| 1 | `registration_id` | Source/standardized | `player_registrations.id` (supported canonical alias) | Canonical registration identifier | `STRING` | Required accepted value | Primary key | Prescribed |
+| 2 | `registration_sk` | Surrogate | SHA-256 of `registration_id` | Stable registration surrogate key | `STRING` | Expected for accepted rows; physical nullability unresolved | Entity surrogate key | Prescribed |
+| 3 | `player_id` | Source/standardized | Required source `player_id` | Registered player identifier | `STRING` | Required accepted reference | Foreign identifier to `players.player_id` | Prescribed |
+| 4 | `player_sk` | Lookup | Surrogate key from accepted player | Registered player surrogate | `STRING` | Required when registration is accepted | Foreign surrogate to `players.player_sk` | Prescribed |
+| 5 | `batch_id` | Source/standardized | Required physical `batch_id`; compatibility alias cannot conceal absence/null | Registration batch identifier | `STRING` | Required accepted reference | Foreign identifier to `monthly_batches.batch_id` | Prescribed |
+| 6 | `batch_sk` | Lookup | Surrogate key from accepted batch | Registration batch surrogate | `STRING` | Required when registration is accepted | Foreign surrogate to `monthly_batches.batch_sk` | Prescribed |
+| 7 | `registration_month` | Source/standardized | Preserved `registration_month` | Source registration month | Source month representation; exact Silver type unresolved | Required source value | None | Prescribed |
+| 8 | `registration_source` | Source/standardized | Preserved and normalized `registration_source` | Source registration channel/type attribute | Categorical; exact type unresolved | Nullable when source contract permits | None | Prescribed |
+| 9 | `assigned_region_id` | Source/standardized | Preserved `assigned_region_id` | Optional assigned-region identifier | `STRING` | Nullable optional reference | Foreign identifier to `regions.region_id` | Prescribed |
+| 10 | `assigned_region_sk` | Lookup | Surrogate key from accepted assigned region | Assigned-region surrogate | `STRING` | Nullable when `assigned_region_id` is null | Foreign surrogate to `regions.region_sk` | Prescribed |
+| 11 | `initial_rating_value` | Source/standardized | Safely converted `initial_rating_value` | Initial registration rating | `DOUBLE` | Nullable when source contract permits | None | Prescribed |
+| 12 | `initial_confidence_score` | Source/standardized | Safely converted `initial_confidence_score` | Initial rating-confidence value | `DOUBLE` | Nullable when source contract permits | None | Prescribed |
+| 13 | `registration_date` | Source/standardized | Supported registration date; otherwise valid `registration_month` | Canonical registration date | `DATE` | Expected for accepted rows under required month contract | None | Prescribed |
+| 14 | `registration_type` | Source/standardized | Normalized supported registration type/source | Canonical registration classification | Categorical; exact type unresolved | May be null when optional source classification is absent | None | Prescribed |
+| 15 | `effective_start_date` | Source/standardized | Supported effective/start date; otherwise `registration_month` | Registration effective-start date | `DATE` | Expected from required registration month unless a supported value is invalid | None | Prescribed |
+| 16 | `effective_end_date` | Source/standardized | Optional supported effective-end date | Registration effective-end date | `DATE` | Nullable optional value | None | Prescribed |
+| 17 | `derived_registration_status` | Derived | Status from effective interval and prescribed comparison date | Derived registration status | Categorical; exact type unresolved | May be null when required comparison inputs are unavailable | Derived field | Prescribed |
+| 18 | `derived_current_registration_flag` | Derived | Current-state evaluation of registration interval | Current registration indicator | `BOOLEAN` | May be null when comparison date is unavailable | Derived field | Prescribed |
+| 19 | `derived_registration_duration_days` | Derived | Snapshot date minus effective start date | Registration duration in days | SQL integer family | Depends on effective start and snapshot dates | Derived field | Prescribed |
+| 20 | `derived_registration_sequence` | Derived | Per-player ordered registration row number | Registration sequence for a player | SQL integer family; window value may be `BIGINT` | Expected for accepted rows; exact width unresolved | Derived field | Prescribed |
+
+### `player_assessment_history` accepted fields
+
+| Order | Field | Origin | Prescribed source or derivation | Intended meaning | Type family | Requirement / relationship | Key or field role | Status |
+|---:|---|---|---|---|---|---|---|---|
+| 1 | `assessment_id` | Source/standardized | `player_assessment_history.id` (supported canonical alias) | Canonical assessment identifier | `STRING` | Required accepted value | Primary key | Prescribed |
+| 2 | `assessment_sk` | Surrogate | SHA-256 of `assessment_id` | Stable assessment surrogate key | `STRING` | Expected for accepted rows; physical nullability unresolved | Entity surrogate key | Prescribed |
+| 3 | `player_id` | Source/standardized | Required source `player_id` | Assessed player identifier | `STRING` | Required accepted reference | Foreign identifier to `players.player_id` | Prescribed |
+| 4 | `player_sk` | Lookup | Surrogate key from accepted player | Assessed player surrogate | `STRING` | Required when assessment is accepted | Foreign surrogate to `players.player_sk` | Prescribed |
+| 5 | `batch_id` | Source/standardized | Required source `batch_id` with supported compatibility alias | Assessment batch identifier | `STRING` | Required accepted reference | Foreign identifier to `monthly_batches.batch_id` | Prescribed |
+| 6 | `batch_sk` | Lookup | Surrogate key from accepted batch | Assessment batch surrogate | `STRING` | Required when assessment is accepted | Foreign surrogate to `monthly_batches.batch_sk` | Prescribed |
+| 7 | `assessment_date` | Source/standardized | Safely parsed assessment date from supported date/month fields | Assessment event date | `DATE` | Required accepted value | Event-time field | Prescribed |
+| 8 | `assessment_type` | Source/standardized | Uppercased `assessment_type` | Assessment classification | Categorical; exact type unresolved | Required accepted value | None | Prescribed |
+| 9 | `assessment_value` | Source/standardized | Safely converted `assessment_value` | Assessment measurement | `DOUBLE` | Nullable when source contract permits | None | Prescribed |
+| 10 | `confidence_score` | Source/standardized | Preserved and safely converted source `confidence_score` | Source assessment-confidence measurement | `DOUBLE` | Nullable when source contract permits | None | Prescribed |
+| 11 | `assessment_confidence` | Source/standardized | Canonical confidence from supported confidence aliases | Canonical assessment-confidence measurement | `DOUBLE` | Column required by Silver contract; value may be null when source permits | None | Prescribed |
+| 12 | `derived_from_matches` | Source/standardized | Preserved source `derived_from_matches` | Source indicator describing assessment provenance | Exact type unresolved | Nullable when source contract permits | Source attribute despite its name | Prescribed |
+
+### `clubs` accepted fields
+
+| Order | Field | Origin | Prescribed source or derivation | Intended meaning | Type family | Requirement / relationship | Key or field role | Status |
+|---:|---|---|---|---|---|---|---|---|
+| 1 | `club_id` | Source/standardized | `clubs.id` (supported canonical alias) | Canonical club identifier | `STRING` | Required accepted value | Primary key | Prescribed |
+| 2 | `club_sk` | Surrogate | SHA-256 of `club_id` | Stable club surrogate key | `STRING` | Expected for accepted rows; physical nullability unresolved | Entity surrogate key | Prescribed |
+| 3 | `club_name` | Source/standardized | `club_name` (supported name alias) | Club or facility name | Exact type unresolved | Required accepted value | None | Prescribed |
+| 4 | `region_id` | Source/standardized | Required source `region_id` | Club region identifier | `STRING` | Required accepted reference | Foreign identifier to `regions.region_id` | Prescribed |
+| 5 | `region_sk` | Lookup | Surrogate key from accepted region | Club region surrogate | `STRING` | Required when club is accepted | Foreign surrogate to `regions.region_sk` | Prescribed |
+| 6 | `country_code` | Lookup/standardized | Normalized supplied country when available; accepted region fallback only when permitted | Canonical club country | Categorical; exact type unresolved | Exact physical nullability unresolved | Region enrichment | Prescribed |
+| 7 | `club_type` | Source/standardized | Preserved `club_type` | Source club classification | Exact type unresolved | Nullable when source contract permits | None | Prescribed |
+| 8 | `competitiveness_level` | Source/standardized | Preserved `competitiveness_level` | Source competitiveness classification | Exact type unresolved | Nullable when source contract permits | None | Prescribed |
+| 9 | `member_capacity` | Source/standardized | Preserved `member_capacity` | Source membership capacity | SQL integer family | Nullable when source contract permits | None | Prescribed |
+| 10 | `founding_date` | Source/standardized | Safely parsed and preserved `founding_date` | Source founding date | `DATE` | Nullable when source contract permits | None | Prescribed |
+| 11 | `indoor_court_count` | Source/standardized | Preserved `indoor_court_count` | Indoor court count | SQL integer family | Nullable when source contract permits | None | Prescribed |
+| 12 | `outdoor_court_count` | Source/standardized | Preserved `outdoor_court_count` | Outdoor court count | SQL integer family | Nullable when source contract permits | None | Prescribed |
+| 13 | `open_date` | Source/standardized | Supported open/start/formation date, otherwise founding date | Canonical club opening date | `DATE` | Nullable when no supported value is supplied | None | Prescribed |
+| 14 | `close_date` | Source/standardized | Optional supported close/end/dissolution date | Canonical club closing date | `DATE` | Nullable optional value | None | Prescribed |
+
+### `teams` accepted fields
+
+| Order | Field | Origin | Prescribed source or derivation | Intended meaning | Type family | Requirement / relationship | Key or field role | Status |
+|---:|---|---|---|---|---|---|---|---|
+| 1 | `team_id` | Source/standardized | `teams.id` (supported canonical alias) | Canonical persistent-team identifier | `STRING` | Required accepted value | Primary key | Prescribed |
+| 2 | `team_sk` | Surrogate | SHA-256 of `team_id` | Stable team surrogate key | `STRING` | Expected for accepted rows; physical nullability unresolved | Entity surrogate key | Prescribed |
+| 3 | `team_type` | Source/standardized | Preserved `team_type` | Source team identity/category attribute | Categorical; exact type unresolved | Required source value | None | Prescribed |
+| 4 | `team_division` | Source/standardized | Preserved `team_division` | Source team division attribute | Categorical; exact type unresolved | Required source value | None | Prescribed |
+| 5 | `team_category` | Source/standardized | Canonical category from prescribed division/category/type precedence | Standardized doubles category | Categorical; exact type unresolved | Required accepted value | None | Prescribed |
+| 6 | `team_identity_type` | Source/standardized | Canonical COMPETITIVE/AD_HOC identity from modern `team_type`; legacy category may yield null | Standardized persistent-team identity | Categorical; exact type unresolved | May be null for supported legacy category semantics | None | Prescribed |
+| 7 | `country_code` | Source/standardized | Normalized `country_code` | Team country | Categorical; exact type unresolved | Nullable when source contract permits | None | Prescribed |
+| 8 | `team_status` | Source/standardized | Normalized `team_status` | Team lifecycle status | Categorical; exact type unresolved | Required accepted value | None | Prescribed |
+| 9 | `formation_date` | Source/standardized | Safely parsed formation/start date | Team formation date | `DATE` | Required accepted value | None | Prescribed |
+| 10 | `dissolution_date` | Source/standardized | Safely parsed optional dissolution/end date | Team dissolution date | `DATE` | Nullable optional value | None | Prescribed |
+| 11 | `derived_active_flag` | Derived | Prescribed active/status semantics | Current team active indicator | `BOOLEAN` | May be null when status/active input is absent | Derived field | Prescribed |
+| 12 | `derived_team_age_at_snapshot_days` | Derived | Snapshot date minus formation date | Team age at snapshot in days | SQL integer family | Depends on valid formation and snapshot dates | Derived field | Prescribed |
+
+### `club_memberships` accepted fields
+
+| Order | Field | Origin | Prescribed source or derivation | Intended meaning | Type family | Requirement / relationship | Key or field role | Status |
+|---:|---|---|---|---|---|---|---|---|
+| 1 | `club_membership_id` | Source/standardized | `club_memberships.id` (supported canonical alias) | Canonical club-membership identifier | `STRING` | Required accepted value | Primary key | Prescribed |
+| 2 | `club_membership_sk` | Surrogate | SHA-256 of `club_membership_id` | Stable club-membership surrogate key | `STRING` | Expected for accepted rows; physical nullability unresolved | Entity surrogate key | Prescribed |
+| 3 | `player_id` | Source/standardized | Required source `player_id` | Member player identifier | `STRING` | Required accepted reference | Foreign identifier to `players.player_id` | Prescribed |
+| 4 | `player_sk` | Lookup | Surrogate key from accepted player | Member player surrogate | `STRING` | Required when membership is accepted | Foreign surrogate to `players.player_sk` | Prescribed |
+| 5 | `club_id` | Source/standardized | Required source `club_id` | Club identifier | `STRING` | Required accepted reference | Foreign identifier to `clubs.club_id` | Prescribed |
+| 6 | `club_sk` | Lookup | Surrogate key from accepted club | Club surrogate | `STRING` | Required when membership is accepted | Foreign surrogate to `clubs.club_sk` | Prescribed |
+| 7 | `membership_type` | Source/standardized | Preserved `membership_type` | Source membership classification | Categorical; exact type unresolved | Nullable when source contract permits | None | Prescribed |
+| 8 | `joined_date` | Source/standardized | Safely parsed and preserved `joined_date` | Source membership join date | `DATE` | Required accepted value | Source lifecycle field | Prescribed |
+| 9 | `left_date` | Source/standardized | Safely parsed and preserved `left_date` | Source membership leave date | `DATE` | Nullable optional value | Source lifecycle field | Prescribed |
+| 10 | `is_primary` | Source/standardized | Preserved `is_primary` | Source primary-membership indicator | `BOOLEAN` | Nullable when source contract permits | None | Prescribed |
+| 11 | `membership_start_date` | Source/standardized | Canonical start from supported membership/join/start fields | Canonical membership start date | `DATE` | Expected from required joined date under schema 1.6 | Canonical interval field | Prescribed |
+| 12 | `membership_end_date` | Source/standardized | Canonical end from supported membership/left/end fields | Canonical membership end date | `DATE` | Nullable optional value | Canonical interval field | Prescribed |
+| 13 | `derived_membership_duration_days` | Derived | Prescribed interval duration using end or snapshot context | Membership duration in days | SQL integer family | Depends on canonical start and comparison end | Derived field | Prescribed |
+| 14 | `derived_current_membership_flag` | Derived | Inclusive interval evaluation at prescribed snapshot context | Current club-membership indicator | `BOOLEAN` | May be null when comparison date is unavailable | Derived field | Prescribed |
+| 15 | `dq_membership_overlap_flag` | Quality | Prescribed preceding-interval overlap check | Membership-overlap warning indicator | `BOOLEAN` | Accepted warning field; physical nullability unresolved | Data-quality indicator | Prescribed |
+
+### `team_memberships` accepted fields
+
+| Order | Field | Origin | Prescribed source or derivation | Intended meaning | Type family | Requirement / relationship | Key or field role | Status |
+|---:|---|---|---|---|---|---|---|---|
+| 1 | `team_membership_id` | Source/standardized | `team_memberships.id` (supported canonical alias) | Canonical team-membership identifier | `STRING` | Required accepted value | Primary key | Prescribed |
+| 2 | `team_membership_sk` | Surrogate | SHA-256 of `team_membership_id` | Stable team-membership surrogate key | `STRING` | Expected for accepted rows; physical nullability unresolved | Entity surrogate key | Prescribed |
+| 3 | `team_id` | Source/standardized | Required source `team_id` | Persistent team identifier | `STRING` | Required accepted reference | Foreign identifier to `teams.team_id` | Prescribed |
+| 4 | `team_sk` | Lookup | Surrogate key from accepted team | Persistent team surrogate | `STRING` | Required when membership is accepted | Foreign surrogate to `teams.team_sk` | Prescribed |
+| 5 | `player_id` | Source/standardized | Required source `player_id` | Member player identifier | `STRING` | Required accepted reference | Foreign identifier to `players.player_id` | Prescribed |
+| 6 | `player_sk` | Lookup | Surrogate key from accepted player | Member player surrogate | `STRING` | Required when membership is accepted | Foreign surrogate to `players.player_sk` | Prescribed |
+| 7 | `player_position` | Source/standardized | Normalized `player_position` from supported position aliases | Player's team position | Categorical; exact type unresolved | Required accepted value under schema 1.6 | None | Prescribed |
+| 8 | `joined_date` | Source/standardized | Safely parsed and preserved `joined_date` | Source team-join date | `DATE` | Required accepted value | Source lifecycle field | Prescribed |
+| 9 | `left_date` | Source/standardized | Safely parsed and preserved `left_date` | Source team-leave date | `DATE` | Nullable optional value | Source lifecycle field | Prescribed |
+| 10 | `player_role` | Source/standardized | Optional supported player-role attribute | Player's role on the team | Categorical; exact type unresolved | Nullable when no supported source value is supplied | None | Prescribed |
+| 11 | `membership_start_date` | Source/standardized | Canonical start from supported membership/join/start fields | Canonical team-membership start date | `DATE` | Required Silver contract column; expected from required joined date | Canonical interval field | Prescribed |
+| 12 | `membership_end_date` | Source/standardized | Canonical end from supported membership/left/end fields | Canonical team-membership end date | `DATE` | Nullable optional value | Canonical interval field | Prescribed |
+| 13 | `derived_membership_duration_days` | Derived | End date minus start date only when both are supplied | Closed team-membership duration in days | SQL integer family | Null for open-ended membership | Derived field | Prescribed |
+| 14 | `derived_current_membership_flag` | Derived | Inclusive interval evaluation at prescribed snapshot context | Current team-membership indicator | `BOOLEAN` | May be null when comparison date is unavailable | Derived field | Prescribed |
+| 15 | `dq_membership_overlap_flag` | Quality | Prescribed preceding-interval overlap check | Membership-overlap warning indicator | `BOOLEAN` | Accepted warning field; physical nullability unresolved | Data-quality indicator | Prescribed |
+
+### `matches` accepted fields
+
+| Order | Field | Origin | Prescribed source or derivation | Intended meaning | Type family | Requirement / relationship | Key or field role | Status |
+|---:|---|---|---|---|---|---|---|---|
+| 1 | `match_id` | Source/standardized | `matches.id` (supported canonical alias) | Canonical match identifier | `STRING` | Required accepted value | Primary key | Prescribed |
+| 2 | `match_sk` | Surrogate | SHA-256 of `match_id` | Stable match surrogate key | `STRING` | Expected for accepted rows; physical nullability unresolved | Entity surrogate key | Prescribed |
+| 3 | `batch_id` | Source/standardized | Required physical `batch_id` | Match batch identifier | `STRING` | Required accepted reference | Foreign identifier to `monthly_batches.batch_id` | Prescribed |
+| 4 | `batch_sk` | Lookup | Surrogate key from accepted batch | Match batch surrogate | `STRING` | Required when match is accepted | Foreign surrogate to `monthly_batches.batch_sk` | Prescribed |
+| 5 | `region_id` | Source/standardized | Optional source `region_id` | Match region identifier | `STRING` | Nullable optional reference | Foreign identifier to `regions.region_id` | Prescribed |
+| 6 | `region_sk` | Lookup | Surrogate key from accepted region | Match region surrogate | `STRING` | Nullable when `region_id` is null | Foreign surrogate to `regions.region_sk` | Prescribed |
+| 7 | `match_date` | Source/standardized | Safely parsed `match_date` | Match event date | `DATE` | Required accepted value | Event-time field | Prescribed |
+| 8 | `match_type` | Source/standardized | Preserved/normalized `match_type` | Source match classification | Categorical; exact type unresolved | Required accepted value | None | Prescribed |
+| 9 | `court_type` | Source/standardized | Preserved `court_type` | Source court classification | Categorical; exact type unresolved | Nullable when source contract permits | None | Prescribed |
+| 10 | `match_format` | Source/standardized | Preserved `match_format` | Source match-format attribute | Categorical; exact type unresolved | Nullable when source contract permits | None | Prescribed |
+| 11 | `total_points_played` | Source/standardized | Preserved `total_points_played` | Source match-level points count | SQL integer family | Nullable when source contract permits | None | Prescribed |
+| 12 | `competition_category` | Source/standardized | Uppercased `match_type` | Canonical competition category | Categorical; exact type unresolved | Required Silver contract column | Canonical standardized field | Prescribed |
+| 13 | `winning_team_id` | Source/standardized | Preserved persistent winner from supported winner-team ID fields | Winning persistent-team identifier | `STRING` | Nullable optional reference | Foreign identifier to `teams.team_id`; must correspond to a side when populated | Prescribed |
+| 14 | `derived_winning_team_number` | Lookup/derived | Winner-side mapping from Bronze `match_teams`, reconciled with any explicit winner-side value | Winning match-side number | SQL integer family | Nullable when no winner is supplied; valid values 1 or 2 when populated | Derived field; not a persistent team ID | Prescribed |
+| 15 | `derived_completed_flag` | Derived | Presence of a valid winning side number | Match completion indicator | `BOOLEAN` | Expected derived value; physical nullability unresolved | Derived field | Prescribed |
+| 16 | `derived_match_year` | Derived | Year from `match_date` | Match year | SQL integer family | Depends on valid match date | Derived field | Prescribed |
+| 17 | `derived_match_month` | Derived | Month from `match_date` | Match month number | SQL integer family | Depends on valid match date | Derived field | Prescribed |
+
+### `match_teams` accepted fields
+
+| Order | Field | Origin | Prescribed source or derivation | Intended meaning | Type family | Requirement / relationship | Key or field role | Status |
+|---:|---|---|---|---|---|---|---|---|
+| 1 | `match_team_id` | Source/standardized | `match_teams.id` (supported canonical alias) | Canonical match-side identifier | `STRING` | Required accepted value | Primary key; match-side identity | Prescribed |
+| 2 | `match_team_sk` | Surrogate | SHA-256 of `match_team_id` | Stable match-side surrogate key | `STRING` | Expected for accepted rows; physical nullability unresolved | Entity surrogate key | Prescribed |
+| 3 | `match_id` | Source/standardized | Required source `match_id` | Parent match identifier | `STRING` | Required accepted reference | Foreign identifier to `matches.match_id` | Prescribed |
+| 4 | `match_sk` | Lookup | Surrogate key from accepted match | Parent match surrogate | `STRING` | Required when side is accepted | Foreign surrogate to `matches.match_sk` | Prescribed |
+| 5 | `team_id` | Source/standardized | Required source `team_id` | Persistent team represented by the side | `STRING` | Required accepted reference | Foreign identifier to `teams.team_id`; not a match-side ID | Prescribed |
+| 6 | `team_sk` | Lookup | Surrogate key from accepted persistent team | Persistent team surrogate | `STRING` | Required when side is accepted | Foreign surrogate to `teams.team_sk` | Prescribed |
+| 7 | `team_number` | Source/standardized | Safely converted team/side number | Match-local side number | SQL integer family | Required accepted value; valid values 1 or 2 | Match-side role | Prescribed |
+| 8 | `team_score` | Source/standardized | Preserved/safely converted `team_score` | Source match-side score | SQL integer family | Required source value | None | Prescribed |
+| 9 | `average_team_rating` | Source/standardized | Preserved `average_team_rating` | Source average team rating | `DOUBLE` | Nullable when source contract permits | None | Prescribed |
+| 10 | `match_date` | Lookup | Inherited from accepted parent match | Match event date for the side | `DATE` | Required through accepted match relationship | Parent-match enrichment | Prescribed |
+| 11 | `pre_match_team_rating` | Source/standardized | Supported pre-match/team-rating value, including `average_team_rating` fallback | Canonical pre-match team rating | `DOUBLE` | Nullable when no supported source value is supplied | None | Prescribed |
+| 12 | `derived_winner_flag` | Derived | Comparison to accepted match winner-side context | Whether this side won the match | `BOOLEAN` | Depends on winner context | Derived field | Prescribed |
+| 13 | `derived_post_match_team_rating` | Derived | No source-supported calculation is prescribed | Post-match team rating placeholder | `DOUBLE` | Prescribed null when no source-supported value exists | Derived field; no synthetic calculation | Prescribed |
+| 14 | `derived_rating_change` | Derived | No source-supported calculation is prescribed | Team rating-change placeholder | `DOUBLE` | Prescribed null when no source-supported value exists | Derived field; no synthetic calculation | Prescribed |
+| 15 | `dq_side_cardinality_warning_flag` | Quality | Accepted side count for the parent match differs from two | Match-side cardinality warning | `BOOLEAN` | Accepted warning field; physical nullability unresolved | Data-quality indicator | Prescribed |
+
+### `match_team_players` accepted fields
+
+| Order | Field | Origin | Prescribed source or derivation | Intended meaning | Type family | Requirement / relationship | Key or field role | Status |
+|---:|---|---|---|---|---|---|---|---|
+| 1 | `match_team_player_id` | Source/standardized | `match_team_players.id` (supported canonical alias) | Canonical match-participant identifier | `STRING` | Required accepted value | Primary key | Prescribed |
+| 2 | `match_team_player_sk` | Surrogate | SHA-256 of `match_team_player_id` | Stable match-participant surrogate key | `STRING` | Expected for accepted rows; physical nullability unresolved | Entity surrogate key | Prescribed |
+| 3 | `match_team_id` | Source/standardized | Required source `match_team_id` | Participating match-side identifier | `STRING` | Required accepted reference | Foreign identifier to `match_teams.match_team_id` | Prescribed |
+| 4 | `match_team_sk` | Lookup | Surrogate key from accepted match side | Participating match-side surrogate | `STRING` | Required when participant is accepted | Foreign surrogate to `match_teams.match_team_sk` | Prescribed |
+| 5 | `match_id` | Lookup | Inherited from accepted match side | Parent match identifier | `STRING` | Required through accepted side relationship | Foreign identifier to `matches.match_id` | Prescribed |
+| 6 | `match_sk` | Lookup | Inherited accepted match surrogate | Parent match surrogate | `STRING` | Required through accepted side relationship | Foreign surrogate to `matches.match_sk` | Prescribed |
+| 7 | `team_id` | Lookup | Inherited persistent team from accepted match side | Persistent team represented by the participant's side | `STRING` | Required through accepted side relationship | Foreign identifier to `teams.team_id` | Prescribed |
+| 8 | `team_sk` | Lookup | Inherited persistent-team surrogate | Persistent team surrogate | `STRING` | Required through accepted side relationship | Foreign surrogate to `teams.team_sk` | Prescribed |
+| 9 | `player_id` | Source/standardized | Required source `player_id` | Participating player identifier | `STRING` | Required accepted reference | Foreign identifier to `players.player_id` | Prescribed |
+| 10 | `player_sk` | Lookup | Surrogate key from accepted player | Participating player surrogate | `STRING` | Required when participant is accepted | Foreign surrogate to `players.player_sk` | Prescribed |
+| 11 | `player_position` | Source/standardized | Normalized supported participant-position value | Player position on this match side | Categorical; exact type unresolved | Nullable when source contract permits; populated values must be valid | None | Prescribed |
+| 12 | `player_rating_at_match` | Source/standardized | Preserved historical `player_rating_at_match` from supported aliases | Player rating at actual match time | `DOUBLE` | Nullable when source contract permits | Historical event-time measurement | Prescribed |
+| 13 | `derived_age_at_match` | Derived | Accepted player birth date evaluated at actual match date | Player age at match | SQL integer family | Depends on valid player birth and match dates | Derived field | Prescribed |
+| 14 | `derived_age_group_at_match` | Derived | Configured age group for `derived_age_at_match` | Player age group at match | Categorical; exact type unresolved | Depends on derived match-time age | Derived field | Prescribed |
+| 15 | `match_date` | Lookup | Inherited from accepted match-side/match context | Actual match event date | `DATE` | Required through accepted match relationship | Parent-match enrichment | Prescribed |
+| 16 | `dq_membership_history_warning_flag` | Quality | Membership history exists but no interval contains the match date | Historical membership warning | `BOOLEAN` | No history alone does not set this flag | Data-quality indicator | Prescribed |
+
+### `match_games` accepted fields
+
+| Order | Field | Origin | Prescribed source or derivation | Intended meaning | Type family | Requirement / relationship | Key or field role | Status |
+|---:|---|---|---|---|---|---|---|---|
+| 1 | `match_game_id` | Source/standardized | `match_games.id` (supported canonical alias) | Canonical game identifier | `STRING` | Required accepted value | Primary key | Prescribed |
+| 2 | `match_game_sk` | Surrogate | SHA-256 of `match_game_id` | Stable game surrogate key | `STRING` | Expected for accepted rows; physical nullability unresolved | Entity surrogate key | Prescribed |
+| 3 | `match_id` | Source/standardized | Required source `match_id` | Parent match identifier | `STRING` | Required accepted reference | Foreign identifier to `matches.match_id` | Prescribed |
+| 4 | `match_sk` | Lookup | Surrogate key from accepted match | Parent match surrogate | `STRING` | Required when game is accepted | Foreign surrogate to `matches.match_sk` | Prescribed |
+| 5 | `game_number` | Source/standardized | Safely converted `game_number` | Game sequence within the match | SQL integer family | Required accepted positive value | Match-local identifying component | Prescribed |
+| 6 | `team_one_score` | Source/standardized | Safely converted `team_one_score` | Side-one game score | SQL integer family | Required accepted nonnegative value | None | Prescribed |
+| 7 | `team_two_score` | Source/standardized | Safely converted `team_two_score` | Side-two game score | SQL integer family | Required accepted nonnegative value | None | Prescribed |
+| 8 | `winning_team_number` | Source/standardized | Safely converted `winning_team_number` | Winning match-side number for the game | SQL integer family | Required accepted value 1 or 2 | Match-side role; not a persistent team ID | Prescribed |
+| 9 | `target_score` | Source/standardized | Safely converted optional `target_score` | Source game target score | SQL integer family | Nullable optional value | None | Prescribed |
+| 10 | `win_by` | Source/standardized | Safely converted optional `win_by` | Source win-by attribute | SQL integer family | Nullable optional value | None | Prescribed |
+| 11 | `actual_team_one_score_share` | Source/standardized | Safely converted `actual_team_one_score_share` | Source share of points scored by side one | `DOUBLE` | Nullable optional value | None | Prescribed |
+| 12 | `derived_score_margin` | Derived | Absolute difference between side scores | Game score margin | SQL integer family | Expected from accepted scores | Derived field | Prescribed |
+| 13 | `derived_total_points` | Derived | Sum of side scores | Total game points | SQL integer family | Expected from accepted scores | Derived field | Prescribed |
+| 14 | `derived_close_game_flag` | Derived | Score margin compared with configured close-game margin | Close-game indicator | `BOOLEAN` | Expected from accepted scores | Derived field | Prescribed |
+| 15 | `derived_extended_game_flag` | Derived | Winning score strictly greater than populated target score | Extended-game indicator | `BOOLEAN` | May be null when target score is absent | Derived field | Prescribed |
+
+### Accepted-field boundaries and unresolved details
+
+The tables above document accepted Silver fields only. Exception tables, operational evidence, convenience views, detailed rule ordering, SQL, and execution procedures remain outside this task and are governed by the Bronze-to-Silver prompt.
+
+Appendix B supplies exact field names and order but deliberately does not establish exact Spark nullability or every physical type. Supported aliases that are absent from the schema 1.6 physical source contract are compatibility inputs, not additional required source columns. Canonical fields such as `province_state`, `display_name`, `registration_type`, and `player_role` therefore retain the prompt's prescribed output names while their populated-source availability and exact physical nullability remain unresolved until implementation verification. No field in this section is marked physically or implementation verified.
+
 
 ## Silver Exceptions and Operational Structures
 
