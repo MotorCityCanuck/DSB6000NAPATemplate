@@ -967,7 +967,50 @@ Refer to `docs/bronze_to_silver_prompt.md` for detailed rule logic, message code
 
 ## Gold Analytical Definitions — Team Maintained
 
-Reserved for consulting-team definitions of Gold features, metrics, measures, analytical outputs, and their Silver lineage. Gold design remains team-controlled; no Gold fields or methods are prescribed here.
+Student consulting teams own and maintain this section. Teams select their Gold schemas, tables, views, features, metrics, analytical methods, selection approaches, and recommendation structures. Document Gold outputs as team decisions rather than prescribed NAPA engineering contracts, and keep every output traceable to its upstream Silver inputs and execution evidence.
+
+Use `napa_250k_production` Silver data for final Olympic roster recommendations. Smaller profiles may support development and testing, but must not be represented as final production evidence. No national player-ranking table, ranking algorithm, or particular Gold output is required. The official RFP and Canvas assignments govern business deliverables; illustrative analytical ideas elsewhere in the repository are not mandatory designs.
+
+### How to use this template
+
+Copy the entity and field templates once for each team-created Gold table or view. Replace bracketed placeholders, remove instructional text, and add rows as needed. Use **Team-defined** for documented design intent, **Implementation verified** only after checking the deployed object and supporting run evidence, and **Unresolved** when a material definition or contract is still undecided. Link detailed source-to-output mappings in `docs/lineage.md` and architecture choices in `docs/architecture.md` rather than duplicating them here.
+
+### Gold entity template — copy per table or view
+
+#### `[Gold table or view name]`
+
+| Documentation item | Team entry |
+|---|---|
+| Object type | `[Table or view]` |
+| Team-owned schema and object name | `[Fully qualified name or documented configurable pattern]` |
+| Business purpose | `[Decision or analytical need this object supports]` |
+| Record grain | `[What one row represents]` |
+| Source Silver tables or views | `[Upstream Silver inputs]` |
+| Gold dependencies | `[Other team-created Gold inputs, or none]` |
+| Primary or identifying key | `[Key or identifying fields, if applicable; otherwise not applicable]` |
+| Applicable dataset profiles | `[Profiles used for development, validation, or production]` |
+| Refresh approach | `[Team-selected refresh behavior and trigger]` |
+| Owner | `[Responsible team role or member]` |
+| Verification status | `[Team-defined, Implementation verified, or Unresolved]` |
+| Verification evidence | `[Run ID, deployed object, test, review, or evidence reference]` |
+
+### Gold field dictionary template — copy per entity
+
+Document design intent before implementation, then update the status and evidence after verification. Do not infer that a planned type, key, or calculation exists physically until it has been checked.
+
+| Field name | Business definition | Data type | Nullable or required expectation | Source or derivation | Key or relationship role | Validation or quality expectation | Verification status |
+|---|---|---|---|---|---|---|---|
+| `[field_name]` | `[Business meaning at the entity's stated grain]` | `[Planned or verified type]` | `[Required, nullable, not applicable, or unresolved]` | `[Silver field(s), Gold dependency, or team-defined derivation]` | `[Primary, identifying, relationship, or none]` | `[Team-defined check and expected behavior]` | `[Team-defined, Implementation verified, or Unresolved]` |
+
+### Analytical decisions and traceability
+
+For each material Gold output, feature, metric, or recommendation dependency, record enough context for another reviewer to understand and reproduce the team's decision. Keep detailed methodology in `docs/analytical_methodology.md`, detailed mappings in `docs/lineage.md`, and architectural rationale in `docs/architecture.md`.
+
+| Gold object, field, or decision | Assumption or definition | Source evidence and profile | Method or derivation selected by team | Limitations or known bias | Validation and reproducibility evidence | Recommendation connection | Owner and status |
+|---|---|---|---|---|---|---|---|
+| `[Team-defined item]` | `[Material assumption, feature, metric, scoring/selection choice, or interpretation]` | `[Silver inputs, date window, and dataset profile]` | `[Team-selected logic; link implementation where applicable]` | `[Uncertainty, missing evidence, comparability concern, or bias]` | `[Tests, sensitivity checks, run/configuration reference, and review evidence]` | `[How the item informs—or does not inform—final rosters, alternates, or development-camp recommendations]` | `[Owner; Team-defined, Implementation verified, or Unresolved]` |
+
+Document observed evidence, modeled or calculated results, and team judgment distinctly. Record material join assumptions, time windows, exclusions, eligibility interpretations, data-quality impacts, uncertainty, and sensitivity findings where they affect an output. A documented Gold definition establishes design intent; only executed and reviewed evidence establishes implementation verification.
 
 ## Open Questions and Definition Decisions
 
