@@ -61,7 +61,3 @@ available_datasets:
     silver_schema: replace_with_prefix_napa_250k_silver
     silver_reject_schema: replace_with_prefix_napa_250k_silver_reject
     gold_schema: replace_with_prefix_napa_250k_production_gold
-
-run:
-  run_id: replace_with_run_identifier
-  run_notes: replace_with_short_description
