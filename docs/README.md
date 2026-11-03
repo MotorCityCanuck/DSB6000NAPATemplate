@@ -1,18 +1,41 @@
-# Documentation Set
+# NAPA Technical Documentation
 
-**Purpose:** This document explains the documentation set included with the NAPA Olympic Analytics Platform template. The repository provides structure and prompts only; student teams must complete, maintain, and defend their own project documentation as the engagement evolves.
+The `/docs` directory provides the engineering specifications, technical references, and team working documents for the NAPA Olympic Analytics case study. Use this index to find the governing document for a task; follow the linked document rather than copying its detailed instructions here.
 
-| Document | Purpose | When to update |
+## Documentation Authority
+
+- The official NAPA RFP and Canvas assignments govern business requirements, eligibility, submissions, and assessment.
+- The supplied Bronze and Silver construction prompts govern their respective prescribed engineering implementations and acceptance requirements.
+- The dataset specification, delivered files and manifest, and repository configuration provide technical reference context.
+- Team-maintained documents record implementation decisions, execution evidence, governance, and analytical reasoning.
+
+The engineering foundation is prescribed through Silver. Gold organization, features, analytical methods, validation choices, and recommendation logic remain team-designed within the assignment requirements.
+
+## Prescribed Engineering Specifications
+
+| Document | Purpose | Authority |
 |---|---|---|
-| assignment_context.md | Capture the business scenario, stakeholder needs, and team interpretation of the client ask. | At project start and whenever scope interpretation changes. |
-| dataset_specification.md | Record dataset release strategy, source file expectations, and validation responsibilities. | Before ingestion and after any source validation findings. |
-| architecture.md | Document the proposed technical architecture and tool roles. | After major design decisions or workflow changes. |
-| medallion_design.md | Explain Raw, Bronze, Silver, and Gold layer intent and scope. | When medallion design or milestone evidence changes. |
-| data_dictionary.md | Define important tables, fields, and business meanings. | After schema discovery and whenever entities change. |
-| data_quality_rules.md | Define planned data quality checks and severity expectations. | Before rule implementation and when rules change. |
-| data_quality_report.md | Summarize run-specific quality findings and confidence impact. | After each milestone run or major validation cycle. |
-| lineage.md | Trace data flow from source files to final deliverables. | When new transformations or outputs are introduced. |
-| governance.md | Record governance, ownership, classification, and access assumptions. | When governance decisions or risks change. |
-| analytical_methodology.md | Explain team-designed evaluation, ranking, and recommendation methods. | Before presenting analytical outputs and after refinements. |
-| ai_usage_summary.md | Document AI-assisted work and human review evidence. | Whenever AI-assisted development materially contributes to work. |
-| runbook.md | Provide reproducible setup and execution instructions. | As setup steps or environment assumptions change. |
+| [Raw-to-Bronze construction prompt](raw_to_bronze_prompt.md) | Complete construction and acceptance contract for parameterized Raw ingestion and Bronze certification. | **Prescribed** |
+| [Bronze-to-Silver construction prompt](bronze_to_silver_prompt.md) | Complete construction, quality, rejection, reconciliation, and acceptance contract for Silver. | **Prescribed** |
+
+## Dataset and Technical References
+
+| Document | Purpose | Authority or maintenance |
+|---|---|---|
+| [Dataset specification](dataset_specification.md) | Profiles, source package contents, record grains, relationships, release conventions, and documentation boundaries. | **Prescribed technical reference** |
+| [Data dictionary](data_dictionary.md) | Field-level definitions, business meanings, and unresolved semantic questions based on actual data and implementations. | **Team-maintained** |
+| [Data quality rules](data_quality_rules.md) | Registry for mandatory prompt requirements and additional team-defined analytical checks without redefining the prompts. | **Team-maintained** |
+| [Architecture](architecture.md) | Consolidated platform architecture, layer responsibilities, namespace patterns, deployment approach, and decision record. | **Team-maintained** |
+| [Lineage](lineage.md) | Expected engineering lineage plus verified implementation and team-designed Gold traceability. | **Team-maintained** |
+
+## Team-Maintained Working Documents
+
+| Document | Purpose | Maintenance |
+|---|---|---|
+| [Documentation index](README.md) | Current map of the documents in this directory and their authority. | **Team-maintained** |
+| [Assignment context](assignment_context.md) | Team interpretation of client objectives, scope, assumptions, uncertainties, and clarification needs. | **Team-maintained** |
+| [Analytical methodology](analytical_methodology.md) | Team-selected Gold analytical approach, validation, uncertainty, and recommendation rationale. | **Team-maintained** |
+| [Data quality report](data_quality_report.md) | Actual run findings, handling decisions, readiness, and downstream analytical impacts. | **Team-maintained** |
+| [Governance](governance.md) | Ownership, stewardship, classification, access, controls, and governance risks. | **Team-maintained** |
+| [Runbook](runbook.md) | Reproducible environment setup, configuration, deployment, execution, validation, and troubleshooting evidence. | **Team-maintained** |
+| [AI usage summary](ai_usage_summary.md) | AI-assisted activities, human review, validation, risks, and accountability evidence. | **Team-maintained** |

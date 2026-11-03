@@ -1,50 +1,94 @@
 # Governance
 
-**Purpose:** This document describes the team’s governance approach for catalog organization, ownership, classification, access control, and stewardship in the NAPA Olympic Analytics Platform. The template provides a framework only; teams must define and justify their own governance decisions and risks.
+**Purpose:** This student-maintained record captures the team's governance decisions, responsibilities, access practices, stewardship, risks, and accountability for the NAPA project. Keep entries concise and update them when a material decision changes.
 
-## Governance Overview
+## Authority and boundaries
 
-- What governance objectives matter for this prototype?
-- Which decisions are architectural, operational, or policy-oriented?
+- The [Raw-to-Bronze construction prompt](raw_to_bronze_prompt.md) prescribes Bronze engineering behavior and acceptance requirements.
+- The [Bronze-to-Silver construction prompt](bronze_to_silver_prompt.md) prescribes Silver engineering, quality, rejection, and acceptance requirements.
+- The official RFP and Canvas assignments govern business deliverables, eligibility, milestones, and submissions.
+- The team controls Gold architecture, analytical methods, validation choices, and recommendation logic. Team decisions must remain supported by evidence and must not rewrite Raw, Bronze, Silver, rejection, or audit evidence.
 
-## Catalog and Schema Design
+This document records governance choices and accountability. It does not replace construction prompts or duplicate detailed architecture, execution, quality, lineage, or security procedures.
 
-- How should catalog and schema boundaries support clarity and reviewability?
-- Which objects belong in Bronze, Silver, Gold, or sandbox areas?
+## Team operating model
 
-## Naming Conventions
+The four-member team may share or rotate responsibilities. Record people or role labels only after the team agrees; no permanent individual assignment is required.
 
-- What naming conventions will the team use for tables, views, outputs, and configs?
-- How will those conventions reduce confusion?
+| Responsibility area | Responsible team member(s) | Backup or reviewer | Notes or status |
+|---|---|---|---|
+| GitHub integration and pull-request coordination | `[ ]` | `[ ]` | `[ ]` |
+| Databricks deployment coordination | `[ ]` | `[ ]` | `[ ]` |
+| Dataset/profile and configuration stewardship | `[ ]` | `[ ]` | `[ ]` |
+| Data-quality and reconciliation evidence | `[ ]` | `[ ]` | `[ ]` |
+| Architecture, lineage, and data-dictionary documentation | `[ ]` | `[ ]` | `[ ]` |
+| Gold analytical validation and recommendation review | `[ ]` | `[ ]` | `[ ]` |
+| Final deliverable integration | `[ ]` | `[ ]` | `[ ]` |
 
-## Ownership Assumptions
+The team remains collectively accountable for submitted work. Assign an owner for resolving each integration conflict, while allowing review and escalation to be shared.
 
-- Who owns source data, transformed objects, and final recommendations?
-- Which roles are accountable for review and approval?
+## GitHub and deployment accountability
 
-## Stewardship Model
+- GitHub is the shared source of truth for reviewed code, configuration, tests, and documentation.
+- Use feature branches and pull requests. Review shared changes before merging to the team `main` branch.
+- Assign an integration-conflict owner when changes overlap; record the decision and affected evidence when needed.
+- Validate, deploy, and run Databricks Asset Bundles manually. Designate one deployment coordinator for each approved deployment to avoid conflicting workspace changes; this responsibility may rotate.
+- Keep deployment commands and environment-specific procedures in [`docs/runbook.md`](runbook.md). Do not assume GitHub Actions are available.
 
-- Who maintains data definitions and lineage?
-- Who updates quality rules and methodology decisions?
+## Workspace access and credentials
 
-## Classification Model
+- Team members authenticate individually to the shared Databricks workspace and GitHub repository.
+- Keep credentials, tokens, secrets, local authentication files, private workspace paths, and source datasets out of Git commits.
+- Record relevant access responsibilities, missing permissions, and approved follow-up actions here without inventing institutional security policies or workspace capabilities.
+- Coordinate shared workspace changes through the deployment process and review them against the selected profile and approved configuration.
 
-- What sensitivity or classification assumptions apply to this data?
-- How should those assumptions shape handling and sharing?
+## Data stewardship and evidence
 
-## Access-Control Proposal
+The team stewards all five independent full-refresh profiles:
 
-- Who should have access to source, transformed, and final artifacts?
-- How should classroom or workspace sharing be handled?
+`napa_5k_clean`, `napa_5k_tainted`, `napa_50k_clean`, `napa_50k_tainted`, and `napa_250k_production`.
 
-## Governance Risks
+Record responsibility for:
 
-- List governance assumptions that may not hold in a production environment.
+- Preserving supplied Raw Parquet files and `manifest.json` unchanged and outside GitHub.
+- Maintaining profile separation and using the prescribed Bronze and Silver processing contracts.
+- Keeping configuration, run identifiers, counts, reconciliation, quality findings, deviations, and disposition evidence.
+- Maintaining the data dictionary and expected-versus-verified lineage.
+- Recording quality exceptions, assumptions, analytical limitations, and their effects on recommendations.
 
-| Governance area | Team decision | Rationale | Evidence or artifact | Open risks |
-|---|---|---|---|---|
-| Catalog structure |  |  |  |  |
-| Naming conventions |  |  |  |  |
-| Ownership |  |  |  |  |
-| Classification |  |  |  |  |
-| Access control |  |  |  |  |
+Refer to [`docs/data_dictionary.md`](data_dictionary.md), [`docs/lineage.md`](lineage.md), and [`docs/data_quality_report.md`](data_quality_report.md) for the corresponding documentation structures. Do not reproduce their field contracts, evidence schemas, or detailed validation rules here.
+
+## AI-assisted development accountability
+
+Students remain responsible for AI-generated code, tests, documentation, analysis, and recommendations. The team must review and validate AI-assisted work, explain material assumptions, and reject unsupported claims or outputs that conflict with the authoritative construction prompts.
+
+Record meaningful AI assistance, human review, risks, and validation in [`docs/ai_usage_summary.md`](ai_usage_summary.md). AI output does not override prescribed Bronze/Silver requirements or establish analytical evidence without appropriate execution and review.
+
+## Governance decisions and risks
+
+Record only decisions the team has made or questions that require follow-up. Do not mark placeholders as completed decisions.
+
+| Decision or issue | Rationale | Alternatives considered | Responsible person | Status | Risks or assumptions |
+|---|---|---|---|---|---|
+| Catalog and namespace structure |  |  |  | Open |  |
+| Naming conventions |  |  |  | Open |  |
+| Profile and configuration stewardship |  |  |  | Open |  |
+| GitHub review and integration practice |  |  |  | Open |  |
+| Databricks deployment coordination |  |  |  | Open |  |
+| Ownership of final analytical outputs |  |  |  | Open |  |
+| Data classification and sharing assumptions |  |  |  | Open |  |
+| Workspace access and unresolved permissions |  |  |  | Open |  |
+| AI review and accountability practice |  |  |  | Open |  |
+
+## Documentation boundaries
+
+| Topic | Primary reference |
+|---|---|
+| Architecture and namespaces | [`docs/architecture.md`](architecture.md) |
+| Authentication, setup, deployment, execution, and troubleshooting | [`docs/runbook.md`](runbook.md) |
+| Expected and verified lineage | [`docs/lineage.md`](lineage.md) |
+| Field contracts and team-defined Gold fields | [`docs/data_dictionary.md`](data_dictionary.md) |
+| Quality findings and downstream impact | [`docs/data_quality_report.md`](data_quality_report.md) |
+| AI-assisted work and human review | [`docs/ai_usage_summary.md`](ai_usage_summary.md) |
+| Bronze engineering requirements | [`docs/raw_to_bronze_prompt.md`](raw_to_bronze_prompt.md) |
+| Silver engineering requirements | [`docs/bronze_to_silver_prompt.md`](bronze_to_silver_prompt.md) |

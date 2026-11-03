@@ -1,10 +1,10 @@
 # SQL Guide
 
-**Purpose:** This document explains how the SQL folder can support Databricks catalog, schema, table, and view work when student teams choose to use SQL. The template provides planning prompts and commented examples only; teams must author, validate, and explain any working SQL they introduce.
+The `sql/` directory is reserved for student-created SQL. The current template intentionally contains no executable SQL.
 
-## Intended Use
+## Responsibilities
 
-- Document catalog and schema setup ideas.
-- Sketch Bronze, Silver, and Gold object planning.
-- Preserve SQL-oriented evidence alongside notebook and Python work.
-- Keep final analytical SQL student-authored and reviewable.
+- If teams use SQL for Bronze or Silver transformations, validation, or evidence, the authoritative construction prompts govern the required behavior, schemas, quality handling, and acceptance criteria.
+- Gold SQL structures, features, metrics, analytical methods, and recommendation logic are entirely team-designed.
+- SQL may support transformations, validation, analysis, or reporting where appropriate to the team's architecture.
+- Keep SQL student-authored, tested, reviewable, and consistent with the team's data dictionary, lineage, runbook, and analytical methodology.

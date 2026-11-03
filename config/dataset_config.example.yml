@@ -1,28 +1,63 @@
 # Copy this file to dataset_config.local.yml and update values for your environment.
 # Do not commit local configuration files that contain personal paths or workspace-specific settings.
-# If your team uses Databricks volumes, workspace files, or another approved storage location,
-# adapt the source paths and document the final approach in the runbook.
+# Replace the catalog, Raw Volume, and schema placeholders with team-owned Unity Catalog values.
 
-active_dataset: napa_5k
+active_dataset: napa_5k_clean
+
+catalog: replace_with_catalog
 
 available_datasets:
-  napa_5k:
-    description: 5K development dataset for Milestone 1 foundational readiness.
-    source_path: data/raw/napa_5k
-  napa_50k:
-    description: 50K validation dataset for Milestone 2 engineering readiness.
-    source_path: data/raw/napa_50k
-  napa_250k:
-    description: 250K production dataset for Milestone 3 final prototype build.
-    source_path: data/raw/napa_250k
+  napa_5k_clean:
+    description: 5K development dataset with clean source data.
+    raw_schema: replace_with_prefix_napa_5k_clean_raw
+    raw_volume_path: /Volumes/replace_with_catalog/replace_with_prefix_napa_5k_clean_raw/napa_files
+    raw_file_count: 13
+    manifest_file: manifest.json
+    bronze_schema: replace_with_prefix_napa_5k_clean_bronze
+    silver_schema: replace_with_prefix_napa_5k_clean_silver
+    silver_reject_schema: replace_with_prefix_napa_5k_clean_silver_reject
+    gold_schema: replace_with_prefix_napa_5k_clean_gold
 
-catalog:
-  target_catalog: napa_pickleball
-  bronze_schema: bronze
-  silver_schema: silver
-  gold_schema: gold
-  sandbox_schema: sandbox
+  napa_5k_tainted:
+    description: 5K development dataset with tainted source data.
+    raw_schema: replace_with_prefix_napa_5k_tainted_raw
+    raw_volume_path: /Volumes/replace_with_catalog/replace_with_prefix_napa_5k_tainted_raw/napa_files
+    raw_file_count: 13
+    manifest_file: manifest.json
+    bronze_schema: replace_with_prefix_napa_5k_tainted_bronze
+    silver_schema: replace_with_prefix_napa_5k_tainted_silver
+    silver_reject_schema: replace_with_prefix_napa_5k_tainted_silver_reject
+    gold_schema: replace_with_prefix_napa_5k_tainted_gold
 
-run:
-  run_id: replace_with_run_identifier
-  run_notes: replace_with_short_description
+  napa_50k_clean:
+    description: 50K validation dataset with clean source data.
+    raw_schema: replace_with_prefix_napa_50k_clean_raw
+    raw_volume_path: /Volumes/replace_with_catalog/replace_with_prefix_napa_50k_clean_raw/napa_files
+    raw_file_count: 13
+    manifest_file: manifest.json
+    bronze_schema: replace_with_prefix_napa_50k_clean_bronze
+    silver_schema: replace_with_prefix_napa_50k_clean_silver
+    silver_reject_schema: replace_with_prefix_napa_50k_clean_silver_reject
+    gold_schema: replace_with_prefix_napa_50k_clean_gold
+
+  napa_50k_tainted:
+    description: 50K validation dataset with tainted source data.
+    raw_schema: replace_with_prefix_napa_50k_tainted_raw
+    raw_volume_path: /Volumes/replace_with_catalog/replace_with_prefix_napa_50k_tainted_raw/napa_files
+    raw_file_count: 13
+    manifest_file: manifest.json
+    bronze_schema: replace_with_prefix_napa_50k_tainted_bronze
+    silver_schema: replace_with_prefix_napa_50k_tainted_silver
+    silver_reject_schema: replace_with_prefix_napa_50k_tainted_silver_reject
+    gold_schema: replace_with_prefix_napa_50k_tainted_gold
+
+  napa_250k_production:
+    description: 250K production dataset with imperfect source data.
+    raw_schema: replace_with_prefix_napa_250k_raw
+    raw_volume_path: /Volumes/replace_with_catalog/replace_with_prefix_napa_250k_raw/napa_files
+    raw_file_count: 13
+    manifest_file: manifest.json
+    bronze_schema: replace_with_prefix_napa_250k_bronze
+    silver_schema: replace_with_prefix_napa_250k_silver
+    silver_reject_schema: replace_with_prefix_napa_250k_silver_reject
+    gold_schema: replace_with_prefix_napa_250k_production_gold

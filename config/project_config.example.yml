@@ -1,5 +1,6 @@
 # Copy this file to project_config.local.yml and update values for your team.
-# Starter values are not analytical decisions. Teams must document their own assumptions and methods.
+# This file contains project identity and business-scope metadata, not active Bronze/Silver pipeline configuration.
+# Runtime profiles and technical settings belong in config/dataset_config.example.yml; team_name is human-readable and distinct from team_prefix.
 
 project_name: napa_olympic_analytics
 team_name: replace_with_team_name
@@ -12,8 +13,3 @@ competition_categories:
   - mens_doubles
   - womens_doubles
   - mixed_doubles
-
-milestones:
-  milestone_1_dataset: napa_5k
-  milestone_2_dataset: napa_50k
-  milestone_3_dataset: napa_250k

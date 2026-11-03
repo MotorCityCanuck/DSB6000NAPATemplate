@@ -1,60 +1,69 @@
 # Analytical Methodology
 
-**Purpose:** This document explains how the team evaluates athletes, teams, partnerships, rankings, development potential, uncertainty, and recommendation confidence for the NAPA Olympic Analytics Platform. The template provides a structure only; teams must design, justify, validate, and explain their own methodology without relying on pre-supplied formulas or thresholds.
+**Purpose:** This document records how the team designs, validates, and defends its Gold-layer analytics and Olympic doubles recommendations. It is a methodology framework, not a prescribed model, formula, algorithm, or Gold-table design.
 
-## Analytical Objectives
+The official Canvas assignment and NAPA RFP govern eligibility, roster sizes, alternates, required submissions, and other business requirements. Record the team's interpretation and analytical decisions here without replacing or redefining those authoritative requirements.
 
-- What decisions should the analytics support?
-- Which outcomes require the strongest evidence?
+## Business objectives and decision scope
 
-## Player-Level Evaluation
+- State the decisions the analytics must support for USA and Canada men's, women's, and mixed doubles.
+- Explain the decision criteria used for roster teams, alternates, and development-camp recommendations.
+- Identify applicable eligibility and assignment constraints and cite their authoritative source.
+- Explain how the team distinguishes observed evidence, analytical estimates, and human judgment.
 
-- What evidence will be considered for player assessment?
-- How will the team handle incomplete or uncertain evidence?
+## Data sources and analytical features
 
-## Team and Partnership Evaluation
+- Identify the Silver sources, date window, data grain, and dataset profile used for each analysis.
+- Define the analytical features used and explain their business relevance, calculation, and lineage.
+- Describe how data-quality findings, rejected records, missing history, and limited evidence affect feature usability.
+- Explain safeguards against duplicate-producing joins, unsupported eligibility assumptions, and future-data leakage.
 
-- What makes a partnership analytically compelling or risky?
-- How will chemistry, continuity, and performance evidence be represented?
+## Candidate-team and partnership evaluation
 
-## National Rankings
+- Explain how eligible candidate teams are identified and compared.
+- Describe how doubles-team performance, partnership continuity, compatibility, competition context, and available player evidence are considered.
+- Explain how the method handles sparse histories, new partnerships, unequal opportunities, and other comparability concerns.
+- Document important tradeoffs and why the selected comparison approach is appropriate for the decision.
 
-- What is the purpose of the ranking output?
-- How will the team validate that the ranking method is defensible?
+## Validation and sensitivity
 
-## Olympic Roster Recommendations
+- Describe the checks used to validate data inputs, feature calculations, comparisons, and analytical findings.
+- Test whether reasonable changes to assumptions, feature definitions, date windows, or decision criteria materially change the recommendations.
+- Compare analytical conclusions with relevant observed evidence and investigate unexpected results.
+- Record validation limitations and findings that could not be independently confirmed.
 
-- What decision criteria should feed final roster recommendations?
-- Where does human judgment complement algorithmic evidence?
+## Uncertainty, limitations, and confidence
 
-## Tournament Candidate Selection
+- Identify sources of uncertainty and the candidates or conclusions most affected by them.
+- Explain how missing or imperfect data changes confidence without fabricating replacement evidence.
+- Describe material limitations, competing interpretations, and risks that decision-makers should understand.
+- State how confidence is communicated without overstating precision.
 
-- What defines a strong tournament candidate?
-- How will the team distinguish readiness from development potential?
+## Recommendation rationale
 
-## Development Pipeline Candidates
+- Explain why each recommended men's, women's, and mixed doubles team is preferred for its country.
+- Document the rationale for alternates and how they address performance, compatibility, availability, or uncertainty tradeoffs.
+- Explain the development-camp recommendations and distinguish current roster readiness from development potential.
+- Connect every final recommendation to traceable evidence, validation results, limitations, and team judgment.
 
-- What signals matter for future potential?
-- How should uncertainty or sparse evidence be handled?
+## Reproducibility and review
 
-## Uncertainty and Limitations
+- Record the implemented feature definitions, source lineage, configuration, date window, and analytical version.
+- Identify the tests and review steps actually completed and distinguish them from proposed validation.
+- Record who reviewed methodology changes and final recommendations.
+- Preserve enough evidence for another reviewer to reproduce the analysis and understand why decisions changed.
 
-- What data or methodological limitations should be surfaced?
-- How will confidence be communicated?
+Teams may choose methods appropriate to their objectives and evidence. No particular statistical model, scoring approach, optimization technique, or Monte Carlo simulation is required.
 
-## Explainability
+## Methodology decision record
 
-- How will the team explain results to non-technical stakeholders?
-- Which assumptions require especially clear narrative support?
-
-## Human Judgment and Review
-
-- Which outputs require final human review before recommendation?
-- Who signs off on methodology changes?
-
-| Analytical outcome | Evidence used | Method selected by team | Why this method is appropriate | Limitations | Validation performed |
+| Decision or recommendation | Business objective and criteria | Data and features used | Method selected by team | Validation and sensitivity checks | Assumptions, limitations, and recommendation rationale |
 |---|---|---|---|---|---|
-| National player rankings |  |  |  |  |  |
-| Team selection scorecard |  |  |  |  |  |
-| Tournament candidates |  |  |  |  |  |
-| Development candidates |  |  |  |  |  |
+| USA men's doubles |  |  |  |  |  |
+| USA women's doubles |  |  |  |  |  |
+| USA mixed doubles |  |  |  |  |  |
+| Canada men's doubles |  |  |  |  |  |
+| Canada women's doubles |  |  |  |  |  |
+| Canada mixed doubles |  |  |  |  |  |
+| Alternates |  |  |  |  |  |
+| Development camp |  |  |  |  |  |
