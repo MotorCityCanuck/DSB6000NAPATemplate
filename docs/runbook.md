@@ -20,7 +20,7 @@ Record environment-specific gaps or permission issues in this runbook; do not re
 
 - GitHub is the team's shared source of truth. Document the repository clone process and any template-specific setup actions after cloning.
 - Use the established feature-branch and pull-request workflow. Deploy only approved changes merged to the team's `main` branch.
-- Keep detailed collaboration procedures in the separate Git/GitHub workflow guidance rather than duplicating that tutorial here.
+- The separate Git/GitHub team workflow guide is distributed through Canvas. The repository's collaboration responsibilities are summarized in [`AGENTS.md`](../AGENTS.md), [`README.md`](../README.md), and [`docs/governance.md`](governance.md); this runbook does not duplicate the full tutorial.
 
 ## Create Local Environment
 
@@ -41,7 +41,7 @@ The configuration template at [`config/dataset_config.example.yml`](../config/da
 - Select one profile through configuration and the `dataset_profile` parameter. Use the same parameterized Bronze implementation and the same parameterized Silver implementation for every profile.
 - Bronze and Silver are full-refresh processes for the selected profile; keep each profile's Raw, Bronze, accepted Silver, and Silver-reject destinations separate.
 - Replace the catalog and schema placeholders with team-owned Unity Catalog values. Raw paths follow `/Volumes/<catalog>/<profile-specific-raw-schema>/napa_files`; accepted Silver and Silver-reject outputs use their corresponding profile-specific schemas.
-- Use the configured shared operations schema, following the construction-prompt convention `<team_prefix>_ops`, for operational evidence. Keep Gold storage separate and team-controlled.
+- Bronze and Silver operational evidence uses the shared team operations schema, following the construction-prompt naming convention `<team_prefix>_ops`. The implementation/runtime configuration establishes that schema; `config/dataset_config.example.yml` intentionally does not expose an `operations_schema` key. Bronze and Silver retain their distinct operational-evidence table contracts. Keep Gold storage separate and team-controlled.
 - Do not use a local `data/raw` directory as a substitute for the configured Raw Volume. Keep local configuration safe and do not commit datasets or secrets.
 
 ## Databricks Setup Notes
