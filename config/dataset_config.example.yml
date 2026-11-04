@@ -1,10 +1,15 @@
-# Copy this file to dataset_config.local.yml and update values for your environment.
+# Planning example for all layers; it is not the generated pipelines' runtime configuration or a second runtime source of truth.
+# Copy this file to dataset_config.local.yml and update values for your environment if the team uses it.
 # Do not commit local configuration files that contain personal paths or workspace-specific settings.
 # Replace the catalog, Raw Volume, and schema placeholders with team-owned Unity Catalog values.
+# Mapping: shared_operations_schema -> generated runtime objects.operations_schema.
+# Every generated profile sets schemas.operations: ${objects.operations_schema}; all five profiles must resolve to this one value.
+# Runtime configuration validation must reject any conflicting or unresolved operations namespace.
 
 active_dataset: napa_5k_clean
 
 catalog: replace_with_catalog
+shared_operations_schema: replace_with_prefix_napa_ops
 
 available_datasets:
   napa_5k_clean:

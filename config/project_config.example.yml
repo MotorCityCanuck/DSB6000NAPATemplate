@@ -1,6 +1,7 @@
-# Copy this file to project_config.local.yml and update values for your team.
+# Planning example for team identity and business scope. It is not a Bronze or Silver runtime input.
+# Copy this file to project_config.local.yml and update values for your team if the team uses it.
 # This file contains project identity and business-scope metadata, not active Bronze/Silver pipeline configuration.
-# Runtime profiles and technical settings belong in config/dataset_config.example.yml; team_name is human-readable and distinct from team_prefix.
+# Dataset/profile planning values belong in config/dataset_config.example.yml; generated runtime structure follows the construction prompts. team_name is human-readable and distinct from team_prefix.
 
 project_name: napa_olympic_analytics
 team_name: replace_with_team_name

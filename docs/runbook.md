@@ -41,14 +41,16 @@ The configuration template at [`config/dataset_config.example.yml`](../config/da
 - Select one profile through configuration and the `dataset_profile` parameter. Use the same parameterized Bronze implementation and the same parameterized Silver implementation for every profile.
 - Bronze and Silver are full-refresh processes for the selected profile; keep each profile's Raw, Bronze, accepted Silver, and Silver-reject destinations separate.
 - Replace the catalog and schema placeholders with team-owned Unity Catalog values. Raw paths follow `/Volumes/<catalog>/<profile-specific-raw-schema>/napa_files`; accepted Silver and Silver-reject outputs use their corresponding profile-specific schemas.
-- Bronze and Silver operational evidence uses the shared team operations schema, following the construction-prompt naming convention `<team_prefix>_ops`. The implementation/runtime configuration establishes that schema; `config/dataset_config.example.yml` intentionally does not expose an `operations_schema` key. Bronze and Silver retain their distinct operational-evidence table contracts. Keep Gold storage separate and team-controlled.
+- Bronze and Silver operational evidence uses the configured shared team operations schema, following the construction-prompt naming convention `<team_prefix>_ops`. The planning example exposes this as `shared_operations_schema`; generated runtime configuration must carry the equivalent value explicitly. Bronze and Silver retain distinct operational-evidence table contracts. Keep Gold storage separate and team-controlled.
+- Raw-to-Bronze `pipeline_runs.execution_type` distinguishes production ingestion (`RAW_TO_BRONZE`) from scoped diagnostics (`OPERATIONS_VALIDATION`) in the same operations schema. Status remains independent. Operations validation initializes only the operations schema and never queries Raw or Bronze resources, resets Bronze, qualifies as ingestion, or authorizes Silver.
+- Production initialization creates only the selected profile's configured Raw and Bronze schemas plus the operations schema with `CREATE SCHEMA IF NOT EXISTS`, then verifies the student-managed Raw Volume. Students create and populate Raw Volumes; the pipeline never creates, modifies, or uploads to them.
 - Do not use a local `data/raw` directory as a substitute for the configured Raw Volume. Keep local configuration safe and do not commit datasets or secrets.
 
 ## Databricks Setup Notes
 
-- Each team member authenticates individually with the Databricks CLI. Confirm that the CLI targets the team's shared workspace and that the `dev` target in [`databricks.yml`](../databricks.yml) uses the team's approved workspace URL placeholder before deployment.
+- Each team member authenticates individually with a named Databricks CLI profile. The reusable `dev` target omits a committed workspace host so the explicitly selected profile supplies host and authentication. Confirm the profile targets the intended team workspace.
 - Record the team's catalog, profile-specific schemas, Raw Volumes, shared operations schema, and permission gaps. Resolve namespace values before implementation execution.
-- Coordinate changes to the shared workspace through the designated deployment coordinator. The coordinator deploys approved changes from the team's GitHub `main` branch; do not make conflicting manual workspace changes.
+- Coordinate shared releases through the designated deployment coordinator. The coordinator uses a clean checkout synchronized to approved GitHub `main`, records the deployed commit SHA, and prevents conflicting workspace changes. Coordinate every shared-data full refresh; personal development deployment alone does not authorize a reset.
 - The current [`databricks.yml`](../databricks.yml) intentionally contains no executable workflow resources. Students must generate the required Bronze and Silver jobs and entry points according to [`docs/raw_to_bronze_prompt.md`](raw_to_bronze_prompt.md) and [`docs/bronze_to_silver_prompt.md`](bronze_to_silver_prompt.md) before attempting workflow execution.
 - Note any differences between local development, Databricks Free Edition, and reviewer environments without assuming capabilities or permissions not confirmed by the team.
 
@@ -58,17 +60,17 @@ The template currently has no executable bundle resources. These steps become ac
 
 1. Complete and review implementation changes.
 2. Merge approved changes into the team's shared GitHub branch.
-3. Confirm the intended Databricks workspace, development target, and profile configuration.
+3. Confirm a clean checkout of approved GitHub `main`, record its exact commit SHA, and confirm the intended Databricks workspace, development target, named CLI profile, and dataset configuration.
 4. Validate the Asset Bundle manually:
 
    ```powershell
-   databricks bundle validate -t dev
+   databricks bundle validate -t dev --profile <team-profile>
    ```
 
 5. Deploy the approved bundle manually:
 
    ```powershell
-   databricks bundle deploy -t dev
+   databricks bundle deploy -t dev --profile <team-profile>
    ```
 
 6. Confirm that the expected generated workflow resources are available.
@@ -76,6 +78,8 @@ The template currently has no executable bundle resources. These steps become ac
 8. Review the results and capture the run evidence below.
 
 Bronze workflow structure and execution responsibilities come from [`docs/raw_to_bronze_prompt.md`](raw_to_bronze_prompt.md). Silver workflow structure and execution responsibilities come from [`docs/bronze_to_silver_prompt.md`](bronze_to_silver_prompt.md). Do not assume that either workflow exists before implementation. Gold execution, notebooks, and analytical methods are team-designed.
+
+Use operations validation as a separate diagnostic path. It resolves configuration, initializes and verifies only the operations schema and all six Raw-to-Bronze operations tables, persists and verifies a typed `RUNNING` record, writes required diagnostics, and finalizes terminal status. It must not inspect Raw or Bronze resources or be recorded as production ingestion. For production execution, schema initialization is non-destructive and separate from the later authorized selected-profile Bronze reset.
 
 ## Profile Execution Sequence
 
@@ -101,11 +105,13 @@ For each Bronze, Silver, or Gold run, record as applicable:
 
 - Dataset profile.
 - Configuration or version reference and Git commit or implementation version.
+- Exact deployed Git commit SHA and deployment coordinator for shared releases.
 - Processing layer and actual workflow identity.
 - Run identifier and execution status.
 - Actual catalog, schema, Volume, and table names.
 - Source, accepted, and rejected record counts.
 - Reconciliation results.
+- Structured `manifest_validation_results` evidence for Raw-to-Bronze.
 - Quality findings and exception evidence.
 - Acceptance-check results.
 - Relevant logs or diagnostics.
@@ -138,7 +144,7 @@ Capture recurring issues and the team's resolution, including:
 - Reconciliation or acceptance-check failures.
 - Partial or incomplete runs.
 
-Inspect logs and operational evidence before taking corrective action. Follow the construction prompts' failure and rerun contracts; do not manually delete evidence or output tables as routine troubleshooting. Record the problem, corrective action, and results of the subsequent run. Do not change Raw data or invent data-repair policies to make a check pass.
+Inspect logs, retained selected-profile Bronze tables, and operational evidence before taking corrective action. A failed production Raw-to-Bronze run keeps published partial tables and diagnostics, records `FAILED` where persistence remains available, and is not eligible for Silver. Do not manually delete that evidence; the next authorized production execution clears the selected Bronze output during normal initialization. Silver must filter to `execution_type = RAW_TO_BRONZE`, ignore operations-validation records, select the latest unambiguous production execution for the profile, and require terminal `SUCCEEDED` plus complete manifest, table-run, reconciliation, and lineage evidence before any Silver reset. Record the problem, corrective action, and later result. Do not change Raw data or invent repairs to make a check pass.
 
 ## Milestone Evidence and Submissions
 
@@ -148,4 +154,4 @@ Canvas assignments and the NAPA RFP govern formal deliverables, required evidenc
 
 ## Known Environment Differences
 
-Record relevant differences across Windows, Linux, macOS, local development, Databricks, and reviewer environments. Keep this section concise and avoid adding unvalidated installation instructions or platform-specific commands.
+Record relevant differences across Windows, Linux, macOS, local development, Databricks, and reviewer environments. Keep local unit tests, Asset Bundle validation, and controlled live Databricks Free Edition execution as distinct evidence. Use the active Databricks SparkSession and documented serverless APIs; prefer SQL metadata inspection such as `SHOW CATALOGS` and do not use `spark.catalog.catalogExists()`. Test doubles must not hide unsupported runtime calls. Keep this section concise and avoid unvalidated installation instructions.

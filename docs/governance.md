@@ -30,9 +30,12 @@ The team remains collectively accountable for submitted work. Assign an owner fo
 ## GitHub and deployment accountability
 
 - GitHub is the shared source of truth for reviewed code, configuration, tests, and documentation.
-- Use feature branches and pull requests. Review shared changes before merging to the team `main` branch.
+- All four team members may develop on feature branches, use Codex, run local tests, deploy personal development bundles, and test non-destructive functionality. Use pull requests and review shared changes before merging to the team `main` branch.
 - Assign an integration-conflict owner when changes overlap; record the decision and affected evidence when needed.
-- Validate, deploy, and run Databricks Asset Bundles manually. Designate one deployment coordinator for each approved deployment to avoid conflicting workspace changes; this responsibility may rotate.
+- Validate, deploy, and run Databricks Asset Bundles manually. A shared release deployment must originate from approved GitHub `main` and a clean local checkout synchronized to it. Designate one deployment coordinator for each approved deployment; this responsibility may rotate.
+- The coordinator must select an explicit local Databricks CLI profile, verify the intended workspace, and record the exact deployed Git commit SHA with the release evidence.
+- Coordinate any full-refresh execution that can reset shared Bronze, Silver, or Gold data. A personal development deployment does not authorize an uncoordinated reset of shared data.
+- Separate personal data schemas are not required. Use the team's approved configuration and coordination controls rather than adding unnecessary infrastructure.
 - Keep deployment commands and environment-specific procedures in [`docs/runbook.md`](runbook.md). Do not assume GitHub Actions are available.
 
 ## Workspace access and credentials
