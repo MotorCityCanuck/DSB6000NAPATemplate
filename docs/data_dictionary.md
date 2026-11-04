@@ -30,9 +30,9 @@ No physical source schema is claimed as verified by this registry alone. Record 
 
 ## Source-Table Registry
 
-The purposes and grains below come from `docs/dataset_specification.md`. Keys and relationships come from the supplied construction prompts. The intended primary keys are contract metadata; actual uniqueness must be validated against delivered data.
+The purposes and grains below come from `docs/dataset_specification.md`. Keys and relationships come from the supplied construction prompts. At the Raw and Bronze layers these are source-designated logical keys: they describe intended identity and relationships but do not create or imply a physically enforced uniqueness constraint. Duplicate key values remain valid ingestion occurrences. Silver validates uniqueness and rejects every occurrence in a duplicate-key group under its prescribed rules.
 
-| Source filename | Business purpose | Record grain | Intended primary key | Important relationships | Applicable profiles | Verification status |
+| Source filename | Business purpose | Record grain | Source-designated logical key | Important relationships | Applicable profiles | Verification status |
 |---|---|---|---|---|---|---|
 | `regions.parquet` | Geographic context for players, clubs, and matches | One record per geographic region | `id` | Parent of clubs; optionally referenced by player home region, match region, and registration assigned region | All five | Prescribed |
 | `clubs.parquet` | Club and facility context | One record per club or facility | `id` | Requires a region; parent of club memberships | All five | Prescribed |
@@ -263,6 +263,8 @@ The Raw-to-Bronze construction prompt is authoritative for this section. These e
 
 For every entity below, Bronze retains every delivered Parquet business column in its original order and appends the ten metadata columns listed in the next section. Bronze does not rename source fields, change their stored types or representations, standardize values, cleanse, filter, join, sort, deduplicate, or derive business features. Nulls, invalid business values, relationships, and duplicate rows remain as delivered. Casts used to calculate `_source_record_hash` apply only inside that expression and do not change stored business columns.
 
+Each Bronze table has the same record grain and source-designated logical key as its Raw source, but it has no prescribed primary-key, unique, or foreign-key constraint. “Primary key” labels retained in the source field dictionary describe logical source intent only when discussing Raw or Bronze. They become enforced accepted-entity uniqueness requirements only under the Silver contract.
+
 The existing [Source Field Dictionary](#source-field-dictionary) records the prescribed source contracts without repeating all 112 definitions here. The delivered Parquet schemas and manifest remain the physical evidence for actual column names, order, types, and nullability. Any difference between that evidence and the prescribed source dictionary must be recorded rather than silently normalized in Bronze. `manifest.json` is validation evidence and is not a Bronze entity.
 
 ### Bronze entity coverage
@@ -304,22 +306,25 @@ The record hash preserves duplicate rows and is not a guaranteed unique key beca
 
 ### Documentation boundary and unresolved physical details
 
-This section does not define the separate Raw-to-Bronze operations tables (`pipeline_runs`, `table_runs`, `schema_snapshots`, `reconciliation_results`, or `run_messages`), their run evidence, rejection behavior, acceptance SQL, or job steps. Those operational evidence structures are reserved for a separate task.
+This section does not define the separate Raw-to-Bronze operations tables (`pipeline_runs`, `table_runs`, `schema_snapshots`, `reconciliation_results`, `manifest_validation_results`, or `run_messages`), their run evidence, rejection behavior, acceptance SQL, or job steps. Those operational evidence structures are documented below.
 
 The construction prompt does not prescribe exact Spark physical types for the ten Bronze metadata columns or comprehensive `NOT NULL` constraints. It explicitly permits a missing source-file modification timestamp to remain null and describes source-file size as captured when available, but does not fully specify size units or fallback/null handling. These details remain **Unresolved** until clarified by an authoritative specification or physically verified implementation evidence.
 
 ## Bronze Operational Evidence Contracts
 
-The Raw-to-Bronze construction prompt prescribes five managed Delta evidence tables in the configured operations schema. The exact deployed catalog and schema are team-configured and have not been physically verified. All entries below are **Prescribed** unless stated otherwise; no primary keys, foreign keys, retention periods, or additional constraints are implied beyond the prompt's exact type and nullability contract. In the field tables, “Required” means the prompt marks the column `NOT NULL`; “Nullable” means it does not.
+Before these evidence tables are initialized, the pipeline automatically initializes only the schemas required by the selected execution type: the shared operations schema for `OPERATIONS_VALIDATION`, or the selected profile's Raw and Bronze schemas plus shared operations for `RAW_TO_BRONZE`. This idempotent, non-destructive step uses validated configured identifiers and `CREATE SCHEMA IF NOT EXISTS`. It does not create a Raw Volume, create any of the 13 Bronze tables, alter existing schemas, or authorize Bronze reset.
+
+The Raw-to-Bronze construction prompt prescribes six managed Delta evidence tables in the configured operations schema. The exact deployed catalog and schema are team-configured and have not been physically verified. All entries below are **Prescribed** unless stated otherwise; no physical primary-key, foreign-key, or additional constraints are implied beyond the prompt's exact type and nullability contract. Operations history is preserved across executions. In the field tables, “Required” means the prompt marks the column `NOT NULL`; “Nullable” means it does not.
 
 ### Evidence structure inventory
 
 | Prescribed structure | Purpose and record grain | Identifying fields and relationships | Field count | Verification status |
 |---|---|---|---:|---|
-| `pipeline_runs` | Pipeline-run lifecycle evidence; normally one open run record is finalized, with a terminal fallback record possible when no open record exists | `pipeline_run_id` identifies the workflow run and relates it to every other operations table; no primary-key constraint is prescribed | 14 | Prescribed |
+| `pipeline_runs` | Lifecycle evidence for production ingestion and operations-validation executions; normally one open run record is finalized, with a terminal fallback record possible when no open record exists | `pipeline_run_id` identifies the workflow run; `execution_type` distinguishes purpose independently of status and relates the run to every other operations table; no primary-key constraint is prescribed | 15 | Prescribed |
 | `table_runs` | Per-source Bronze build-state evidence; separate `RUNNING` and terminal records are appended for each source table | Relates a run, release, source file/entity, and Bronze target through `pipeline_run_id`, `release_name`, `source_file_name`, `source_table`, and `target_table`; no primary key is prescribed | 17 | Prescribed |
 | `schema_snapshots` | One captured field definition per run, layer, and Raw or Bronze object | Relates schema evidence to a run and release; Raw `object_name` is the source filename and Bronze `object_name` is the unqualified Bronze table name | 11 | Prescribed |
 | `reconciliation_results` | One Raw-to-Bronze reconciliation result per source/target for a pipeline run | Relates a run and release to `source_file_name` and `bronze_table`; no primary key is prescribed | 13 | Prescribed |
+| `manifest_validation_results` | One structured manifest/readiness validation occurrence for a run, validation type, and target | `pipeline_run_id` relates to `pipeline_runs`; `dataset_profile` identifies the selected profile; optional `source_table` relates source-scoped checks to the configured source registry and table-run evidence; no primary key is prescribed | 10 | Prescribed |
 | `run_messages` | One diagnostic message event associated with a run and optionally a source | Relates messages to `pipeline_run_id`, `release_name`, and optional `source_name`; no primary key is prescribed | 8 | Prescribed |
 
 ### `pipeline_runs` fields
@@ -331,15 +336,18 @@ The Raw-to-Bronze construction prompt prescribes five managed Delta evidence tab
 | 3 | `pipeline_version` | `STRING` | Required | Configured pipeline version | Prescribed |
 | 4 | `release_name` | `STRING` | Required | Configured release processed by the run | Prescribed |
 | 5 | `processing_mode` | `STRING` | Required | Processing mode used by the run | Prescribed |
-| 6 | `configuration_hash` | `STRING` | Required | Reproducible hash of the resolved configuration | Prescribed |
-| 7 | `workflow_run_id` | `STRING` | Nullable | Trustworthy external workflow-run identifier when available | Prescribed |
-| 8 | `status` | `STRING` | Required | Pipeline lifecycle or terminal status | Prescribed |
-| 9 | `started_ts` | `TIMESTAMP` | Required | UTC-normalized pipeline start timestamp | Prescribed |
-| 10 | `completed_ts` | `TIMESTAMP` | Nullable | UTC-normalized pipeline completion timestamp | Prescribed |
-| 11 | `duration_seconds` | `DOUBLE` | Nullable | Elapsed run duration in seconds | Prescribed |
-| 12 | `triggered_by` | `STRING` | Nullable | Trustworthy trigger identity or context when available | Prescribed |
-| 13 | `error_class` | `STRING` | Nullable | Error classification for a failed run | Prescribed |
-| 14 | `error_message` | `STRING` | Nullable | Run-level error summary | Prescribed |
+| 6 | `execution_type` | `STRING` | Required | `RAW_TO_BRONZE` for production ingestion or `OPERATIONS_VALIDATION` for the scoped operations diagnostic execution; purpose is independent of status and is preserved through finalization | Prescribed |
+| 7 | `configuration_hash` | `STRING` | Required | Reproducible hash of the resolved configuration | Prescribed |
+| 8 | `workflow_run_id` | `STRING` | Nullable | Trustworthy external workflow-run identifier when available | Prescribed |
+| 9 | `status` | `STRING` | Required | Execution lifecycle or terminal status (`RUNNING`, `SUCCEEDED`, or `FAILED`), interpreted independently of `execution_type` | Prescribed |
+| 10 | `started_ts` | `TIMESTAMP` | Required | UTC-normalized pipeline start timestamp | Prescribed |
+| 11 | `completed_ts` | `TIMESTAMP` | Nullable | UTC-normalized pipeline completion timestamp | Prescribed |
+| 12 | `duration_seconds` | `DOUBLE` | Nullable | Elapsed run duration in seconds | Prescribed |
+| 13 | `triggered_by` | `STRING` | Nullable | Trustworthy trigger identity or context when available | Prescribed |
+| 14 | `error_class` | `STRING` | Nullable | Error classification for a failed run | Prescribed |
+| 15 | `error_message` | `STRING` | Nullable | Run-level error summary | Prescribed |
+
+Both execution types use the same configured operations schema and the same six operations tables. After the RUNNING row is durable, successful schema initialization is recorded with `SCHEMA_ALREADY_EXISTS` or `SCHEMA_CREATED` and `SCHEMA_VERIFIED` messages for each required schema. If schema initialization fails before operations storage is available, the chained runtime exception is authoritative and no durable operations message is claimed. Existing physical operations tables must match every prescribed column name, order, type, and reliably reported nullability; incompatible tables fail validation without being dropped or recreated. `RAW_TO_BRONZE` may be terminal `SUCCEEDED` only after the complete 13-source ingestion, manifest-validation, table-run, reconciliation, and Bronze-state gate passes. `OPERATIONS_VALIDATION` may be terminal `SUCCEEDED` after its operations initialization, typed RUNNING-record read-back, explicit-schema persistence, diagnostic, and finalization checks pass; it does not require ingestion evidence and cannot authorize Bronze reset or Silver processing. Because the operations tables have independent Delta transactions, a truthful `PIPELINE_SUCCESS_READY` message is persisted before the terminal row and states that success commit is still pending; the `SUCCEEDED` pipeline-row write is the final required durable operation and remains the authoritative outcome.
 
 ### `table_runs` fields
 
@@ -397,6 +405,23 @@ The Raw-to-Bronze construction prompt prescribes five managed Delta evidence tab
 | 12 | `status` | `STRING` | Required | Reconciliation result status | Prescribed |
 | 13 | `evaluated_ts` | `TIMESTAMP` | Required | Timestamp when reconciliation was evaluated | Prescribed |
 
+### `manifest_validation_results` fields
+
+| Order | Field name | Prescribed type | Nullability | Meaning | Verification status |
+|---:|---|---|---|---|---|
+| 1 | `pipeline_run_id` | `STRING` | Required | Identifier of the parent Raw-to-Bronze pipeline run; logical relationship to `pipeline_runs.pipeline_run_id` | Prescribed |
+| 2 | `dataset_profile` | `STRING` | Required | Selected profile associated with the validation result; one of the five supported profile values | Prescribed |
+| 3 | `source_table` | `STRING` | Nullable | Configured source entity for source-scoped checks; null for package- or manifest-level checks | Prescribed |
+| 4 | `validation_type` | `STRING` | Required | Validation category; core codes are `FILE_EXISTENCE`, `SOURCE_MAPPING`, `INVENTORY`, `PARQUET_READABILITY`, `ROW_COUNT`, `ORDERED_COLUMNS`, `SCHEMA_HASH`, `CHECKSUM`, and `MANIFEST_METADATA` | Prescribed |
+| 5 | `validation_target` | `STRING` | Required | File, manifest field, schema expectation, source mapping, or other object/value being validated | Prescribed |
+| 6 | `expected_value` | `STRING` | Nullable | Expected scalar serialized as text or composite value as deterministic JSON; null only when no expected value can legitimately be represented | Prescribed |
+| 7 | `observed_value` | `STRING` | Nullable | Observed scalar serialized as text or composite value as deterministic JSON; null when unavailable, including some validation errors | Prescribed |
+| 8 | `validation_status` | `STRING` | Required | `PASSED` for agreement, `FAILED` for a completed mismatch/missing or unexpected item, or `ERROR` when validation cannot be completed | Prescribed |
+| 9 | `error_message` | `STRING` | Nullable | Diagnostic detail; required as a nonempty value when `validation_status = ERROR` | Prescribed |
+| 10 | `validated_at` | `TIMESTAMP` | Required | UTC-normalized timestamp when the validation was evaluated | Prescribed |
+
+The table is append-only across executions. It records successful comparisons as well as mismatches and validation errors. Complete success coverage includes package-level manifest existence/readability, inventory, and required manifest metadata checks and, for every enabled source, file existence, source mapping, Parquet readability, row count, ordered columns, schema hash, and checksum checks. Missing or unexpected files use file-existence evidence with an identifying target and string expected/observed values. Any required `FAILED` or `ERROR` row, or absent required validation coverage, prevents a successful Raw-to-Bronze outcome. Rows remain available after failure and are not removed by the selected-profile Bronze reset.
+
 ### `run_messages` fields
 
 | Order | Field name | Prescribed type | Nullability | Meaning | Verification status |
@@ -414,12 +439,13 @@ The Raw-to-Bronze construction prompt prescribes five managed Delta evidence tab
 
 | Evidence channel or concept | Prescribed content | Physical contract status | Verification status |
 |---|---|---|---|
-| Manifest and Raw-readiness comparison evidence | Expected and actual manifest values, mismatch type, source file, selected dataset profile, release identifier, and pipeline-run identifier | No additional table name, exact field names, types, nullability, or storage representation are prescribed; these details are **Unresolved** | Prescribed concept; physical representation Unresolved |
 | Bronze table catalog metadata | A Raw-preserving table comment plus `napa.layer=bronze`, `napa.release=<release>`, `napa.pipeline=raw_to_bronze`, and `napa.processing_mode=full_refresh` properties on each Bronze Delta table | Comment template and property names/values are prescribed; deployed catalog representation and verification remain unresolved | Prescribed; not physically verified |
-| Databricks task values | Runtime handoff and diagnostics using `run_id`, `pipeline_run_id`, `release_name`, `config_hash`, `catalog`, `raw_schema`, `bronze_schema`, `source_path`, `operations_schema_fqn`, `bronze_table_count`, `reconciled_source_count`, and `final_status`, as applicable | Keys are prescribed, but physical types, durability, retention, and table representation are not prescribed | Prescribed concept; physical representation Unresolved |
-| Job-log failure diagnostics | Root-cause traceback and available failure diagnostics, including publication or cleanup failures | Platform log schema, field names, types, storage, and retention are not prescribed | Prescribed concept; physical representation Unresolved |
+| Databricks task values | Runtime handoff and diagnostics using `run_id`, `pipeline_run_id`, `execution_type`, `release_name`, `config_hash`, `catalog`, `raw_schema`, `bronze_schema`, `source_path`, `operations_schema_fqn`, `bronze_table_count`, `reconciled_source_count`, and `final_status`, as applicable | Keys are prescribed, but physical types, durability, retention, and table representation are not prescribed | Prescribed concept; physical representation Unresolved |
+| Job-log failure diagnostics | Root-cause traceback and available failure diagnostics, including identification of retained partial Bronze output | Platform log schema, field names, types, storage, and retention are not prescribed | Prescribed concept; physical representation Unresolved |
 
-Raw-to-Bronze prescribes no rejected-record or defect-row table: Bronze preserves all source rows and does not apply business-rule rejection. Technical validation and publication defects are represented through statuses, error fields, run messages, the required but physically unresolved validation evidence, and job logs where available. This dictionary describes evidence structure only; `docs/raw_to_bronze_prompt.md` remains authoritative for validation rules, diagnostic codes, failure behavior, execution steps, job topology, and acceptance checks.
+Raw-to-Bronze prescribes no rejected-record or defect-row table: Bronze preserves all source rows and does not apply business-rule rejection. Manifest and readiness comparisons are represented in `manifest_validation_results`; other technical validation and publication defects are represented through operations statuses, error fields, run messages, and job logs where available. This dictionary describes evidence structure only; `docs/raw_to_bronze_prompt.md` remains authoritative for validation rules, diagnostic codes, failure behavior, execution steps, job topology, and acceptance checks.
+
+A Raw-to-Bronze failure does not delete tables already published by that execution. Those tables retain their normal Bronze definitions and `_pipeline_run_id` lineage but constitute incomplete diagnostic output, not a certified release. The terminal `pipeline_runs` outcome and related table/reconciliation evidence distinguish success from failure. Silver must first filter to `execution_type = RAW_TO_BRONZE`, ignore all `OPERATIONS_VALIDATION` records, and reject the latest selected-profile production execution unless its complete evidence establishes terminal `SUCCEEDED`.
 
 ## Silver Entities and Field Definitions
 
@@ -823,7 +849,7 @@ No exception schema, table, field, or behavior in this section is marked **Physi
 
 ## Silver Operational Evidence Contracts
 
-The Bronze-to-Silver construction prompt prescribes six managed Delta evidence tables in the shared, configurable `<team_prefix>_ops` schema. They are separate from the five unprefixed Raw-to-Bronze operations tables already documented above: Silver reuses the shared operations **namespace**, not the Bronze tables or their field contracts. Silver may also consult upstream Raw-to-Bronze run evidence during source preflight without rewriting it.
+The Bronze-to-Silver construction prompt prescribes six managed Delta evidence tables in the shared, configurable `<team_prefix>_ops` schema. They are separate from the six unprefixed Raw-to-Bronze operations tables already documented above: Silver reuses the shared operations **namespace**, not the Bronze tables or their field contracts. Silver may also consult upstream Raw-to-Bronze run evidence, including `manifest_validation_results`, during source preflight without rewriting it.
 
 All contracts below are **Prescribed** and have not been marked **Physically verified** or **Implementation verified**. The prompt specifies field order and broad type conventions, but delegates exact DDL and per-column nullability to the implementation. Consequently, physical nullability is **Unresolved** for every field. Required run context, statuses, and timestamps must not be silently null, but the prompt does not identify the exact `NOT NULL` columns. `threshold_value` also has no prescribed physical type and remains **Unresolved**.
 
@@ -952,7 +978,7 @@ No primary or foreign keys, retention periods, or additional uniqueness constrai
 - **Referential integrity and quality:** `b2s_quality_results` records grouped reject evidence and prescribed cross-table checks, including referential-integrity outcomes. Detailed rules and rejection decisions remain in the construction prompt and the profile-specific exception outputs.
 - **Acceptance and schema evidence:** `b2s_schema_snapshots`, quality results, reconciliation results, table-run completion records, and structured messages collectively support the completion gate. They document evidence; they do not prove a run succeeded until implementation execution is verified.
 
-Accepted Silver tables remain in the selected profile's configured `silver_schema`; rejected occurrences remain in its `silver_reject_schema`; all six `b2s_*` tables remain in the shared `<team_prefix>_ops` schema. The five Raw-to-Bronze operations tables coexist there under their unprefixed names and retain their existing contracts.
+Accepted Silver tables remain in the selected profile's configured `silver_schema`; rejected occurrences remain in its `silver_reject_schema`; all six `b2s_*` tables remain in the shared `<team_prefix>_ops` schema. The six Raw-to-Bronze operations tables coexist there under their unprefixed names and retain their existing contracts.
 
 ### Non-table operational evidence
 
