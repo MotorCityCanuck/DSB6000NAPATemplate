@@ -27,6 +27,9 @@ config/*_local.yml
 *.sqlite
 *.duckdb
 
+# Local data directory, including manifests and validation artifacts
+/data/
+
 # Large/generated outputs
 outputs/**/*.parquet
 outputs/**/*.csv
