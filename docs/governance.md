@@ -4,12 +4,12 @@
 
 ## Authority and boundaries
 
-- The [Raw-to-Bronze construction prompt](raw_to_bronze_prompt.md) prescribes Bronze engineering behavior and acceptance requirements.
-- The [Bronze-to-Silver construction prompt](bronze_to_silver_prompt.md) prescribes Silver engineering, quality, rejection, and acceptance requirements.
+- The supplied [Bronze bootstrap guide](bronze_bootstrap_guide.md) governs operation and validation of the student Bronze utility.
+- Instructor-provided Silver specifications and a revised prompt are forthcoming.
 - The official RFP and Canvas assignments govern business deliverables, eligibility, milestones, and submissions.
 - The team controls Gold architecture, analytical methods, validation choices, and recommendation logic. Team decisions must remain supported by evidence and must not rewrite Raw, Bronze, Silver, rejection, or audit evidence.
 
-This document records governance choices and accountability. It does not replace construction prompts or duplicate detailed architecture, execution, quality, lineage, or security procedures.
+This document records governance choices and accountability. It does not replace active layer guidance or duplicate detailed architecture, execution, quality, lineage, or security procedures.
 
 ## Team operating model
 
@@ -63,7 +63,7 @@ Refer to [`docs/data_dictionary.md`](data_dictionary.md), [`docs/lineage.md`](li
 
 ## AI-assisted development accountability
 
-Students remain responsible for AI-generated code, tests, documentation, analysis, and recommendations. The team must review and validate AI-assisted work, explain material assumptions, and reject unsupported claims or outputs that conflict with the authoritative construction prompts.
+Students remain responsible for AI-generated code, tests, documentation, analysis, and recommendations. The team must review and validate AI-assisted work, explain material assumptions, and reject unsupported claims or outputs that conflict with active instructor guidance.
 
 Record meaningful AI assistance, human review, risks, and validation in [`docs/ai_usage_summary.md`](ai_usage_summary.md). AI output does not override prescribed Bronze/Silver requirements or establish analytical evidence without appropriate execution and review.
 
@@ -93,5 +93,5 @@ Record only decisions the team has made or questions that require follow-up. Do 
 | Field contracts and team-defined Gold fields | [`docs/data_dictionary.md`](data_dictionary.md) |
 | Quality findings and downstream impact | [`docs/data_quality_report.md`](data_quality_report.md) |
 | AI-assisted work and human review | [`docs/ai_usage_summary.md`](ai_usage_summary.md) |
-| Bronze engineering requirements | [`docs/raw_to_bronze_prompt.md`](raw_to_bronze_prompt.md) |
-| Silver engineering requirements | [`docs/bronze_to_silver_prompt.md`](bronze_to_silver_prompt.md) |
+| Bronze student workflow | [`notebooks/00_bootstrap_bronze.py`](../notebooks/00_bootstrap_bronze.py) and [`docs/bronze_bootstrap_guide.md`](bronze_bootstrap_guide.md) |
+| Silver engineering requirements | Revised instructor specifications and prompt forthcoming |

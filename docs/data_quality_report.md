@@ -1,6 +1,6 @@
 # Data Quality Report
 
-**Purpose:** Use this team-maintained template to record actual data quality observations, validation evidence, handling decisions, and effects on downstream analysis. It reports results; it does not redefine quality rules or replace the Bronze and Silver construction prompts.
+**Purpose:** Use this team-maintained template to record actual data quality observations, validation evidence, handling decisions, and effects on downstream analysis. It reports results; it does not redefine the supplied Bronze workflow or forthcoming revised Silver guidance.
 
 ## Reporting Scope
 
@@ -14,11 +14,11 @@ Create or update a report for each significant run and dataset profile:
 
 Record findings for the applicable Raw, Bronze, Silver, or Gold layer. Classify each check as one of the following:
 
-- **Mandatory Bronze:** Evidence from validation required by `raw_to_bronze_prompt.md`.
-- **Mandatory Silver:** Evidence from validation required by `bronze_to_silver_prompt.md`.
+- **Mandatory Bronze:** Evidence from the supplied Bronze bootstrap validation.
+- **Mandatory Silver:** Evidence required by the forthcoming revised Silver guidance.
 - **Team-defined analytical:** Additional checks selected by the team for its Gold features, analyses, or recommendations.
 
-The construction prompts are authoritative for mandatory Bronze and Silver handling. Team-defined checks must support the team's analytical design without changing those requirements or prescribing a particular Gold model or method.
+The supplied Bronze workflow governs mandatory Bronze handling. Forthcoming revised Silver guidance will govern Silver handling. Team-defined checks must support the team's analytical design without prescribing a particular Gold model or method.
 
 ## Execution Context
 
@@ -47,11 +47,11 @@ Use one row for each finding that requires evidence, a decision, or follow-up. R
 |---|---|---|---|---|---|---|---|---|---|
 |  |  |  |  |  |  |  |  |  |  |
 
-For mandatory checks, retain the construction prompt's rule identifier or evidence reference when available. For a team-defined analytical check, describe its rationale and how its result affects derived measures, candidate-team comparisons, or recommendation confidence.
+For mandatory checks, retain the applicable guidance's rule identifier or evidence reference when available. For a team-defined analytical check, describe its rationale and how its result affects derived measures, candidate-team comparisons, or recommendation confidence.
 
 ## Handling Expectations
 
-A quality finding does not automatically require deleting a record. Follow the applicable construction prompt and document whether the finding caused a run failure, warning, rejection to a prescribed exception output, acceptance with a flag, or a downstream analytical limitation. Keep expected record-level quality issues distinct from technical execution failures.
+A quality finding does not automatically require deleting a record. Follow the applicable layer guidance and document whether the finding caused a run failure, warning, rejection to a prescribed exception output, acceptance with a flag, or a downstream analytical limitation. Keep expected record-level quality issues distinct from technical execution failures.
 
 The original Raw Parquet files and colocated `manifest.json` must remain unchanged. Apply permitted standardization, rejection, or analytical handling in the appropriate downstream layer; never rewrite Raw data to make a validation pass. Any Gold-layer exclusion or adjustment must be justified, reproducible, and limited to the team's analysis.
 

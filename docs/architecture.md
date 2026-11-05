@@ -4,7 +4,7 @@
 
 This student-maintained document describes the high-level architecture of the NAPA Olympic Analytics Platform: its processing layers, technology responsibilities, configurable namespaces, deployment approach, and team decisions. It consolidates the useful layer-design guidance previously separated from the main architecture record.
 
-This document does not replace the detailed Raw-to-Bronze or Bronze-to-Silver construction prompts. Those prompts are authoritative for their respective engineering behavior, quality controls, outputs, failure handling, and acceptance criteria. The official RFP and Canvas assignments remain authoritative for business deliverables and eligibility requirements.
+This document does not replace the supplied Bronze notebook and guide or the forthcoming revised Silver guidance. The official RFP and Canvas assignments remain authoritative for business deliverables and eligibility requirements.
 
 ## 2. System Context and Technology Responsibilities
 
@@ -24,7 +24,7 @@ Delivered Parquet files + manifest.json
 | Unity Catalog | Configurable catalog, schemas, Volumes, managed tables, views, and operational evidence with profile isolation |
 | Databricks CLI and Asset Bundles | Individual authentication and manual validation, deployment, and execution of approved team changes |
 | Reusable source modules and SQL | Testable implementation of prescribed engineering behavior and team-designed analytics |
-| Notebooks or scripts | Thin orchestration and review surfaces; detailed Bronze and Silver structure follows the construction prompts |
+| Notebooks or scripts | The supplied notebook implements Bronze; Silver structure will follow the revised instructor guidance |
 | AI-assisted development tools | Generate and explain work at team direction; students review, test, approve, and defend the results |
 
 ## 3. Five-Profile Dataset Strategy
@@ -39,20 +39,20 @@ One parameterized Bronze implementation and one parameterized Silver implementat
 | `napa_50k_tainted` | Engineering and quality validation | Intentionally tainted |
 | `napa_250k_production` | Production-scale analysis and final recommendations | Production data with intentional imperfections |
 
-Profile selection occurs through configuration and the `dataset_profile` parameter, not through separate pipeline forks. Bronze and Silver use full-refresh execution for the selected profile. Build and validate Bronze before Silver for each profile; use production Silver evidence from `napa_250k_production` for final recommendations.
+Profile selection occurs through the supplied Bronze notebook's widget and configuration, not through separate implementations. Build and validate Bronze before Silver for each profile; use production Silver evidence from `napa_250k_production` for final recommendations.
 
 ## 4. Raw, Bronze, Silver, and Gold Layer Responsibilities
 
 | Layer | Purpose and expected content | Quality and preservation boundary | Ownership |
 |---|---|---|---|
-| Raw | The 13 supplied Parquet files and colocated `manifest.json` in the selected Unity Catalog Volume | Preserve the delivered package unchanged; validate its inventory and manifest as required by the Bronze prompt | Prescribed engineering foundation |
-| Bronze | Raw-preserving managed Delta representation with prescribed ingestion metadata and operational evidence | Preserve each successfully ingested Raw record one-for-one, including duplicate logical keys and business defects; clear the selected profile at run initialization, retain partial tables after failure, reconcile successful publication, and perform no business cleansing or feature engineering | Prescribed by `docs/raw_to_bronze_prompt.md` |
-| Silver | Standardized accepted entities, corresponding exception outputs, convenience views, reconciliation, quality results, and operational evidence | Filter to the latest `RAW_TO_BRONZE` execution and require its complete successful production evidence before consumption; ignore `OPERATIONS_VALIDATION`; apply mandatory validation, duplicate-key and referential-integrity enforcement, and standardization; preserve accepted attributes and diagnostic evidence; do not fabricate corrections | Prescribed by `docs/bronze_to_silver_prompt.md` |
+| Raw | The 13 supplied Parquet files and colocated `manifest.json` in the selected Unity Catalog Volume | Preserve the delivered package unchanged; the Bronze bootstrap validates its inventory and manifest | Prescribed engineering foundation |
+| Bronze | Raw-preserving managed Delta representation with prescribed ingestion metadata | Preserve every Raw record one-for-one, including duplicate logical keys and business defects; reconcile manifest, Raw, and Bronze counts; perform no business cleansing or feature engineering | Supplied by `notebooks/00_bootstrap_bronze.py` and `docs/bronze_bootstrap_guide.md` |
+| Silver | Standardized, quality-controlled analytical foundation | Follow the instructor-provided Silver specifications and revised prompt when published; do not fabricate corrections or requirements | Revised guidance forthcoming |
 | Gold | Decision-ready features, measures, comparisons, analytical products, and recommendation evidence | Team defines analytical quality controls and documents assumptions, limitations, uncertainty, and lineage without rewriting upstream evidence | Team-defined |
 
-The construction prompts contain the detailed table mappings, rules, execution behavior, and acceptance tests. This architecture records only the layer boundaries.
+The supplied Bronze notebook and guide define the active student Bronze workflow. Revised Silver guidance is forthcoming. This architecture records only the layer boundaries.
 
-Source-designated Raw/Bronze keys describe logical entity identity and relationships; they do not impose physical uniqueness in Bronze. Trusted uniqueness and relationship enforcement begin in Silver. The same `<catalog>.<team_prefix>_ops` schema stores production ingestion (`RAW_TO_BRONZE`) and scoped operations-validation (`OPERATIONS_VALIDATION`) records; `execution_type` identifies purpose independently of lifecycle `status`. After validated configuration selects a profile and execution type, automatic namespace initialization checks the configured catalog and uses only `CREATE SCHEMA IF NOT EXISTS`. Operations validation initializes and verifies only the operations schema. Production initializes and verifies only the selected profile's Raw and Bronze schemas plus the shared operations schema, then independently requires the student-prepared Raw Volume. Existing schemas, contents, ownership, and permissions are not changed; partial creation is retained if a later initialization step fails. Schema initialization alone never authorizes Bronze reset. Operations validation does not query or depend on Raw or Bronze resources, never resets or publishes Bronze, and cannot authorize Silver. A failed production Raw-to-Bronze run may leave partially populated tables in only its selected profile schema for diagnosis. Those tables are not a release: the shared operations status remains `FAILED`, and Silver preflight must reject them. Historical operations evidence is append-preserved across executions, including structured successful, failed, and error manifest comparisons in `<catalog>.<team_prefix>_ops.manifest_validation_results`, while the next production Bronze execution clears only the selected profile's retained Bronze output during initialization.
+Source-designated Raw/Bronze keys describe logical entity identity and relationships; they do not impose physical uniqueness in Bronze. Normal bootstrap use keeps `existing_table_action = "fail"`; intentional reloads replace only the selected expected Bronze tables as documented in the guide. The bootstrap does not create enterprise operational evidence. Silver validation and enforcement behavior will be defined by the forthcoming revised guidance.
 
 ## 5. Unity Catalog Namespace and Storage Architecture
 
@@ -68,13 +68,13 @@ Catalog and team prefix values are configurable. The patterns below are the cons
 
 Raw, Bronze, Silver, and Silver-reject namespaces are isolated by profile. The one shared operations schema follows `<team_prefix>_ops`; no separate operations-validation schema is used. `config/dataset_config.example.yml` supplies configurable placeholders for these destinations and a `gold_schema` for each profile.
 
-Gold must remain separate from engineering evidence, but its physical organization is a team decision. Teams may use the configured Gold schema placeholders or document another assignment-consistent, team-owned organization; the construction prompts do not prescribe Gold tables or models.
+Gold must remain separate from engineering evidence, but its physical organization is a team decision. Teams may use the configured Gold schema placeholders or document another assignment-consistent, team-owned organization; the supplied Bronze workflow and forthcoming Silver guidance do not prescribe Gold tables or models.
 
 ## 6. Application Structure and Deployment Approach
 
 - Keep environment and profile values in configuration rather than source code.
 - Reuse the same configured implementation across all profiles.
-- Follow the construction prompts' boundaries for reusable modules, thin orchestration entrypoints, SQL, tests, and workflow definitions.
+- Use the supplied Bronze notebook as documented and follow the revised Silver boundaries when published.
 - Keep implementation, configuration templates, tests, and documentation in GitHub; keep source data, secrets, local authentication, and generated storage outside the repository.
 - Use `databricks.yml` as the bundle root. It defines bundle `napa_olympic_analytics` and one default development target. The reusable target omits a workspace host so the explicitly selected local Databricks CLI profile supplies team-specific host and authentication; executable resources are added only when implementing the prescribed workflows.
 - Team members authenticate individually through the Databricks CLI. The team designates a deployment coordinator to manually validate and deploy approved changes from its GitHub `main` branch.
@@ -115,15 +115,15 @@ Milestones represent stages of platform and analytical maturity; no milestone co
 
 | Decision | Rationale or authority | Status |
 |---|---|---|
-| Use five isolated dataset profiles with parameterized Bronze and Silver processing | README and construction prompts | Established |
-| Use full-refresh Bronze and Silver execution | Construction prompts | Established |
-| Preserve Raw records one-for-one in Bronze without enforcing logical-key uniqueness or business quality | Instructor architectural decision and construction prompts | Established |
-| Retain selected-profile partial Bronze output after failure, preserve historical diagnostics, and block Silver until a complete successful Bronze run exists | Instructor architectural decision and construction prompts | Established |
-| Distinguish `RAW_TO_BRONZE` and `OPERATIONS_VALIDATION` in `pipeline_runs` while sharing one operations schema and keeping status independent | Instructor architectural decision | Established |
-| Initialize only execution-required schemas from validated configuration with non-destructive, idempotent DDL; require students to prepare Raw Volumes | Validated namespace portability and safety contract | Established |
-| Store Raw and managed layer outputs in configurable Unity Catalog namespaces | Construction prompts and dataset configuration | Established |
-| Treat Bronze and Silver prompts as authoritative engineering contracts | `AGENTS.md` and construction prompts | Established |
-| Deploy manually through a development Asset Bundle target | Repository workflow and `databricks.yml` | Established |
+| Use five isolated dataset profiles with the supplied Bronze utility | README and Bronze bootstrap guide | Established |
+| Process and validate one Bronze profile at a time | Bronze bootstrap guide | Established |
+| Preserve Raw records one-for-one in Bronze without enforcing logical-key uniqueness or business quality | Supplied Bronze utility | Established |
+| Protect existing Bronze tables by default and require an explicit, targeted reload choice | Bronze bootstrap guide | Established |
+| Keep enterprise operational infrastructure out of the student Bronze workflow | Simplified course design | Established |
+| Require students to prepare Raw Volumes and configure team-owned Bronze schemas | Supplied Bronze utility | Established |
+| Store Raw and managed layer outputs in configurable Unity Catalog namespaces | Dataset configuration and Bronze guide | Established |
+| Treat the supplied Bronze guidance as active and the revised Silver guidance as forthcoming | `AGENTS.md` and README | Established |
+| Run the supplied Bronze notebook directly in Databricks Free Edition | Bronze bootstrap guide | Established |
 | Keep Gold analytical architecture team-owned and separate from engineering evidence | Assignment boundary and `AGENTS.md` | Established |
 
 ### Team decision record
@@ -146,6 +146,7 @@ Record only choices that remain open to the team. Add rows as decisions are made
 | `docs/governance.md` | Stewardship, ownership, access, controls, approvals, and responsible AI decisions |
 | `docs/runbook.md` | Authentication, setup, upload, deployment, execution, troubleshooting, and actual run evidence |
 | `docs/dataset_specification.md` | Dataset profiles, source-package contents, record grains, relationships, and release conventions |
-| `docs/raw_to_bronze_prompt.md` | Authoritative Bronze construction and acceptance contract |
-| `docs/bronze_to_silver_prompt.md` | Authoritative Silver construction, quality, and acceptance contract |
+| `notebooks/00_bootstrap_bronze.py` | Supplied student Bronze utility |
+| `docs/bronze_bootstrap_guide.md` | Bronze configuration, operation, validation, and reload safety |
+| Revised Silver prompt | Forthcoming instructor-provided Silver construction guidance |
 | Official RFP and Canvas assignments | Business requirements, eligibility, deliverables, and assessment authority |

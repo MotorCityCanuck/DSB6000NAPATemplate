@@ -6,10 +6,10 @@
 
 - This specification describes package structure, record grains, conceptual relationships, and releases.
 - `docs/data_dictionary.md` records field-level definitions, business semantics, and team interpretations.
-- `docs/raw_to_bronze_prompt.md` and `docs/bronze_to_silver_prompt.md` govern implementation and acceptance requirements for their respective layers.
+- `notebooks/00_bootstrap_bronze.py` and `docs/bronze_bootstrap_guide.md` govern the active student Bronze workflow; revised Silver guidance is forthcoming.
 - The official NAPA RFP and Canvas assignments govern business deliverables, eligibility, and submission requirements.
 
-Do not treat this document as a substitute for the delivered Parquet schemas, `manifest.json`, construction prompts, or official assignment materials.
+Do not treat this document as a substitute for the delivered Parquet schemas, `manifest.json`, supplied Bronze guidance, forthcoming revised Silver guidance, or official assignment materials.
 
 ## Dataset profiles
 
@@ -56,7 +56,7 @@ The supplied file names must remain unchanged. Field-level columns, types, nulla
 - Individual games in `match_games.parquet` belong to their parent match.
 - Monthly batch identifiers provide release or snapshot context for records that reference a batch.
 
-These are conceptual paths, not a complete field-level relationship contract. Use the delivered schema and the construction prompts for exact keys, nullability, and validation behavior.
+These are conceptual paths, not a complete field-level relationship contract. Use the delivered schema, supplied Bronze guidance, and forthcoming revised Silver guidance for exact keys, nullability, and validation behavior.
 
 ## Release conventions
 
@@ -88,5 +88,5 @@ Milestones represent stages of engineering and analytical development; no milest
 
 - Confirm the exact expected files and one readable `manifest.json` are present for the selected profile.
 - Profile schemas rather than assuming consistency.
-- Validate manifest metadata, actual row counts, ordered columns, schemas, checksums, keys, and relationships as required by the construction prompts.
+- Validate Bronze using the supplied notebook and guide; follow the forthcoming revised Silver guidance for downstream validation.
 - Record the selected profile, run evidence, quality findings, and any deviations without inventing replacement data.

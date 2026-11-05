@@ -1,12 +1,12 @@
 # Data Quality Rules
 
-**Purpose:** This document helps teams track required engineering quality rules and any additional analytical checks they design. It is an evidence registry and planning aid; it does not replace the supplied construction prompts.
+**Purpose:** This document helps teams track required engineering quality rules and any additional analytical checks they design. It is an evidence registry and planning aid; it does not replace the supplied Bronze workflow or forthcoming revised Silver guidance.
 
 ## Rule authority and categories
 
 ### Mandatory Bronze engineering requirements
 
-`docs/raw_to_bronze_prompt.md` is authoritative for Raw package validation, Bronze publication, reconciliation, certification evidence, and failure behavior. These requirements are mandatory and must not be weakened, bypassed, or reclassified as optional team checks. Record evidence showing which prompt requirements were executed and whether they passed; do not create a competing Bronze rule specification here.
+`notebooks/00_bootstrap_bronze.py` and `docs/bronze_bootstrap_guide.md` define the active student workflow for Raw package validation, Bronze publication, count reconciliation, and failure behavior. Record the notebook's validation results; do not create a competing Bronze rule specification here.
 
 The delivered Parquet files and colocated `manifest.json` must remain unchanged. Bronze preserves each successfully ingested source record one-for-one, including invalid values and duplicate logical keys, while adding only the prescribed operational metadata. Source-designated keys express logical identity but are not physically enforced as unique in Bronze. Quality remediation, duplicate-key rejection, referential-integrity enforcement, and required cascading rejection belong downstream and must never rewrite the Raw package.
 
@@ -14,7 +14,7 @@ Production Raw-to-Bronze technical checks still validate readability, inventory,
 
 ### Mandatory Silver engineering requirements
 
-`docs/bronze_to_silver_prompt.md` is authoritative for Silver validation, standardization, duplicate handling, referential integrity, rejection, reconciliation, quality evidence, and failure behavior. These requirements are mandatory and must not be weakened, bypassed, or replaced by a team-designed policy. Reference the prompt's rule identifiers and contracts rather than redefining them here.
+Instructor-provided Silver specifications and a revised prompt are forthcoming. Preserve the rules in this document as reference material, but do not infer or implement the revised Silver workflow until the instructor publishes it.
 
 Expected record-level quality defects must be handled and evidenced as prescribed without being confused with technical pipeline failure. Teams must preserve required reject, reconciliation, and operational evidence and must not synthesize corrections for invalid source values.
 
@@ -48,7 +48,7 @@ Distinguish checks that block pipeline completion from findings that reject a re
 
 ## Reference quality areas
 
-The following existing areas remain useful for planning. They are not a new mandatory rule set. When an area is governed by a construction prompt, reference and implement the exact prompt requirement; otherwise document any additional Gold check as team-defined.
+The following existing areas remain useful for planning. They are not a new mandatory rule set. Follow the active layer guidance when available; otherwise document any additional Gold check as team-defined.
 
 | Quality area | Planning question |
 |---|---|

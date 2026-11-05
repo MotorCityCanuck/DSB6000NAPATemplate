@@ -5,18 +5,19 @@ The `/docs` directory provides the engineering specifications, technical referen
 ## Documentation Authority
 
 - The official NAPA RFP and Canvas assignments govern business requirements, eligibility, submissions, and assessment.
-- The supplied Bronze and Silver construction prompts govern their respective prescribed engineering implementations and acceptance requirements.
+- The supplied Bronze bootstrap notebook and operating guide govern the student Bronze workflow.
+- Instructor-provided Silver specifications and a revised prompt are forthcoming.
 - The dataset specification, delivered files and manifest, and repository configuration provide technical reference context.
 - Team-maintained documents record implementation decisions, execution evidence, governance, and analytical reasoning.
 
 The engineering foundation is prescribed through Silver. Gold organization, features, analytical methods, validation choices, and recommendation logic remain team-designed within the assignment requirements.
 
-## Prescribed Engineering Specifications
+## Prescribed Engineering Guidance
 
 | Document | Purpose | Authority |
 |---|---|---|
-| [Raw-to-Bronze construction prompt](raw_to_bronze_prompt.md) | Complete construction and acceptance contract for parameterized Raw ingestion and Bronze certification. | **Prescribed** |
-| [Bronze-to-Silver construction prompt](bronze_to_silver_prompt.md) | Complete construction, quality, rejection, reconciliation, and acceptance contract for Silver. | **Prescribed** |
+| [Bronze bootstrap guide](bronze_bootstrap_guide.md) | Configuration, execution, validation, and reload safety for the supplied Bronze notebook. | **Prescribed student workflow** |
+| Revised Silver prompt | Instructor-provided Silver construction guidance. | **Forthcoming** |
 
 ## Dataset and Technical References
 

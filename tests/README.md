@@ -4,9 +4,9 @@ The `tests/` directory is reserved for implementation tests and student-develope
 
 ## Testing responsibilities
 
-- Bronze tests must verify the contracts defined by `docs/raw_to_bronze_prompt.md`.
-- Silver tests must verify the contracts defined by `docs/bronze_to_silver_prompt.md`.
-- Test coverage should address the five approved dataset profiles as required by the construction prompts.
+- Bronze checks should verify the supplied bootstrap notebook's documented preservation and validation behavior.
+- Silver tests should follow the instructor-provided specifications and revised prompt when published.
+- Test coverage should address the five approved dataset profiles using the supplied Bronze workflow and forthcoming revised Silver guidance.
 - Students should develop additional Gold tests for their own analytical designs, features, metrics, and recommendations.
 - No particular Gold scoring, ranking, modeling, or selection method is prescribed.
 

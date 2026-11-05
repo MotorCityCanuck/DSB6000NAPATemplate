@@ -20,7 +20,7 @@ Resolve `<catalog>`, `<raw_schema>`, `<bronze_schema>`, `<silver_schema>`, `<sil
 
 ### Raw to Bronze
 
-`docs/raw_to_bronze_prompt.md` is authoritative for this layer. Each selected profile supplies 13 Parquet files and a colocated `manifest.json`. The manifest is delivery and validation evidence, not a Bronze table.
+The supplied Bronze notebook and operating guide govern this layer. Each selected profile supplies 13 Parquet files and a colocated `manifest.json`. The manifest is delivery and validation evidence, not a Bronze table.
 
 For every source, Bronze retains each successfully ingested record and all business columns in source order, including duplicate logical keys and invalid values, and appends the ten prescribed operational metadata columns. Source-designated keys are lineage metadata, not physically enforced uniqueness constraints. Bronze performs no business cleansing, filtering, joins, sorting, deduplication, referential-integrity enforcement, or feature engineering. Publication is a selected-profile full refresh initialized by clearing only that profile's prior Bronze output.
 
@@ -46,7 +46,7 @@ The shared operations schema also records Raw-to-Bronze lineage in `pipeline_run
 
 ### Bronze to Silver
 
-`docs/bronze_to_silver_prompt.md` is authoritative for this layer. The mapping applies to all five profiles. Each row produces an accepted table in `<silver_schema>` and a corresponding `<target>_exceptions` table in `<silver_reject_schema>`, including declared empty outputs.
+The mapping below is retained as reference material. Instructor-provided Silver specifications and a revised prompt are forthcoming and will govern the active student Silver workflow when published.
 
 Common mandatory controls apply to every mapping: preserve source-row multiplicity through validation; reject every occurrence of a duplicate non-null primary key; use safe conversions; retain diagnostic source values; resolve required parents against accepted Silver records; separate accepted and rejected occurrences; append prescribed metadata; and reconcile `Bronze = accepted + rejected`. Expected record-level defects do not independently fail execution, while missing evidence, technical errors, failed publication, or unexplained reconciliation differences do.
 
@@ -90,7 +90,7 @@ Verify expected lineage against the generated implementation and deployed Databr
 |---|---|---|---|---|---|---|---|
 |  |  | Not started / implemented / verified |  |  |  |  |  |
 
-Record deviations without silently changing the expected specification. Resolve Bronze or Silver deviations against the applicable construction prompt and retain evidence of any approved decision.
+Record deviations without silently changing the expected specification. Resolve Bronze or Silver deviations against the active layer guidance and retain evidence of any approved decision.
 
 ## Gold Lineage — Team-Completed Template
 
