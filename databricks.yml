@@ -1,9 +1,65 @@
 bundle:
-  name: napa_olympic_analytics
+  name: napa_student_bootstraps
 
-# Select an authenticated local Databricks CLI profile for every bundle command.
-# The profile supplies the workspace host and authentication; do not commit either here.
-# A designated coordinator deploys shared releases from approved GitHub main.
+sync:
+  include:
+    - notebooks/00_bootstrap_bronze.py
+    - notebooks/01_build_silver.py
+  exclude:
+    - "**/__pycache__/**"
+    - "**/*.pyc"
+
+variables:
+  catalog:
+    description: Unity Catalog catalog used by the team
+    default: workspace
+  team_prefix:
+    description: Unique SQL-safe team namespace prefix
+    default: napa_platform
+  notebook_root:
+    description: Workspace path containing the deployed bootstrap notebooks
+    default: ${workspace.file_path}/notebooks
+
+resources:
+  jobs:
+    napa_bronze_bootstrap:
+      name: NAPA Bronze Bootstrap
+      max_concurrent_runs: 1
+      performance_target: STANDARD
+      parameters:
+        - name: catalog
+          default: ${var.catalog}
+        - name: team_prefix
+          default: ${var.team_prefix}
+        - name: dataset_profiles
+          default: napa_5k_clean
+        - name: existing_table_action
+          default: fail
+      tasks:
+        - task_key: bronze_bootstrap
+          notebook_task:
+            notebook_path: ${var.notebook_root}/00_bootstrap_bronze.py
+            source: WORKSPACE
+
+    napa_silver_bootstrap:
+      name: NAPA Silver Bootstrap
+      max_concurrent_runs: 1
+      performance_target: STANDARD
+      parameters:
+        - name: catalog
+          default: ${var.catalog}
+        - name: team_prefix
+          default: ${var.team_prefix}
+        - name: dataset_profile
+          default: napa_5k_clean
+        - name: existing_table_action
+          default: fail
+      tasks:
+        - task_key: silver_bootstrap
+          notebook_task:
+            notebook_path: ${var.notebook_root}/01_build_silver.py
+            source: WORKSPACE
+
 targets:
   dev:
     mode: development

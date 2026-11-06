@@ -1,6 +1,6 @@
 # Runbook
 
-**Purpose:** This student-maintained runbook records local preparation, dataset configuration, Databricks workspace readiness, Bronze execution and validation, troubleshooting, and reruns for the NAPA Olympic Analytics Platform. The supplied Bronze notebook and guide define the active Bronze workflow; revised Silver guidance is forthcoming. Gold implementation and analytical methods remain team-controlled. Record team-specific assumptions and environment details here without committing credentials, secrets, source data, or private paths.
+**Purpose:** This student-maintained runbook records local preparation, dataset configuration, Databricks workspace readiness, Bronze and Silver execution and validation, troubleshooting, and reruns. The supplied notebooks and guides define the engineering foundation; Gold implementation and analytical methods remain team-controlled. Record team-specific assumptions and environment details here without committing credentials, secrets, source data, or private paths.
 
 ## Prerequisites
 
@@ -38,10 +38,10 @@ The configuration template at [`config/dataset_config.example.yml`](../config/da
 4. `napa_50k_tainted`
 5. `napa_250k_production`
 
-- Select one profile through the Bronze notebook widget. Use the same supplied bootstrap notebook for every profile.
-- Keep each profile's Raw and Bronze destinations separate. Follow the forthcoming revised Silver guidance for Silver destinations and execution.
-- Replace the catalog and schema placeholders with team-owned Unity Catalog values. Raw paths follow `/Volumes/<catalog>/<profile-specific-raw-schema>/napa_files`; accepted Silver and Silver-reject outputs use their corresponding profile-specific schemas.
-- The Bronze bootstrap does not create enterprise operational evidence. Keep Gold storage separate and team-controlled.
+- Select one profile at a time through the job parameter. Use the same two supplied notebooks for every profile.
+- Keep each profile's Raw, Bronze, and Silver destinations separate.
+- Replace the catalog and prefix placeholders with team-owned Unity Catalog values. Raw paths follow `/Volumes/<catalog>/<profile-specific-raw-schema>/napa_files`; accepted tables, rejects, and the DQ summary share the corresponding profile-specific Silver schema.
+- The student bootstraps do not create legacy enterprise operational evidence. Keep Gold storage separate and team-controlled.
 - Students create and populate Raw Volumes; the bootstrap verifies but never modifies or uploads Raw files.
 - Do not use a local `data/raw` directory as a substitute for the configured Raw Volume. Keep local configuration safe and do not commit datasets or secrets.
 
@@ -49,19 +49,19 @@ The configuration template at [`config/dataset_config.example.yml`](../config/da
 
 - Confirm the intended Databricks workspace, catalog, profile-specific Raw Volumes, Bronze schemas, and permissions.
 - Coordinate shared reloads and keep `existing_table_action = "fail"` for normal operation.
-- Use [`notebooks/00_bootstrap_bronze.py`](../notebooks/00_bootstrap_bronze.py) with the [`Bronze bootstrap guide`](bronze_bootstrap_guide.md). Revised Silver guidance is forthcoming.
+- Follow the [`Bronze and Silver bootstrap guide`](bootstrap_guide.md) for bundle validation, deployment, manual job execution, and inspection.
 - Note any differences between local development, Databricks Free Edition, and reviewer environments without assuming capabilities or permissions not confirmed by the team.
 
-## Run the Supplied Bronze Bootstrap
+## Run the Supplied Bootstraps
 
-1. Review and configure the supplied Bronze notebook for the team's catalog, prefix, Raw Volumes, and Bronze schemas.
-2. Select one profile, beginning with `napa_5k_clean`.
-3. Keep `existing_table_action = "fail"` for normal execution.
-4. Choose **Run all** once and wait for completion.
-5. Confirm that all 13 expected tables report `PASS` and record the results below.
-6. Follow the guide's Danger Zone only for a deliberate reload of team-owned Bronze tables.
+1. Validate and deploy the reviewed bundle from approved GitHub `main` using the team's catalog, prefix, and explicit CLI profile.
+2. Manually run `napa_bronze_bootstrap` for one profile, beginning with `napa_5k_clean`; keep `existing_table_action=fail`.
+3. Confirm all 13 Bronze tables report `PASS`, inspect representative records, and record the evidence.
+4. Manually run `napa_silver_bootstrap` for that same profile; keep `existing_table_action=fail`.
+5. Inspect the 13 accepted tables, 13 reject tables, and `silver_data_quality_summary`; confirm table-level reconciliation.
+6. Use `replace` only for a coordinated, intentional full refresh of the selected team-owned profile.
 
-Do not begin Silver construction until the instructor publishes the revised Silver specifications and prompt. Gold execution, notebooks, and analytical methods remain team-designed.
+The jobs are independent: there is no schedule or automatic chain. Gold execution, notebooks, and analytical methods remain team-designed.
 
 ## Profile Execution Sequence
 
@@ -73,7 +73,7 @@ Use this recommended progressive testing order:
 4. `napa_50k_tainted`
 5. `napa_250k_production`
 
-For each profile, complete and validate Bronze before its dependent Silver processing. Use the same supplied bootstrap notebook and profile-isolated destinations for every profile. Follow the revised Silver guidance when published.
+For each profile, complete and inspect Bronze before manually running Silver. Use the same supplied pair of bootstraps and profile-isolated destinations for every profile.
 
 This is a progressive testing sequence, not a mapping of dataset sizes to milestones:
 
@@ -125,7 +125,7 @@ Capture recurring issues and the team's resolution, including:
 - Reconciliation or acceptance-check failures.
 - Partial or incomplete runs.
 
-Inspect the notebook output and any tables created before a failure. Do not automatically rerun the final cell. Investigate the cause, confirm the selected profile and destinations, and use the guide's Danger Zone only for a deliberate reload. Record the problem, corrective action, and later result. Do not change Raw data or invent repairs to make a check pass. Follow the forthcoming revised Silver guidance before consuming Bronze.
+Inspect the job output and any tables created before a failure. Investigate the cause, confirm the selected profile and destinations, and use `replace` only for a deliberate coordinated reload. Record the problem, corrective action, and later result. Do not change Raw data or invent repairs to make a check pass; do not run Silver unless Bronze reported `OVERALL PASS`.
 
 ## Milestone Evidence and Submissions
 

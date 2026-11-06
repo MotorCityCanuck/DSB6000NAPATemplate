@@ -49,13 +49,44 @@ PROFILE_CONFIG = {
 existing_table_action = "fail"
 
 # COMMAND ----------
-# Run this cell once if you want to choose a subset before the first full run.
+# Bundle parameters use widgets; interactive runs retain the same defaults.
 if "dbutils" in globals():
-    try:
-        dbutils.widgets.text("dataset_profiles", "napa_5k_clean", "Dataset profiles")
-    except Exception:
-        # Keep the student's current selection when the widget already exists.
-        pass
+    for widget_name, default_value, label in (
+        ("catalog", CATALOG, "Catalog"),
+        ("team_prefix", TEAM_PREFIX, "Team prefix"),
+        ("dataset_profiles", "napa_5k_clean", "Dataset profiles"),
+        ("existing_table_action", existing_table_action, "Existing table action"),
+    ):
+        try:
+            dbutils.widgets.text(widget_name, default_value, label)
+        except Exception:
+            pass
+
+    CATALOG = dbutils.widgets.get("catalog").strip()
+    TEAM_PREFIX = dbutils.widgets.get("team_prefix").strip()
+    existing_table_action = dbutils.widgets.get("existing_table_action").strip().lower()
+    PROFILE_CONFIG = {
+        "napa_5k_clean": {
+            "raw_volume_path": f"/Volumes/{CATALOG}/{TEAM_PREFIX}_5k_clean_raw/napa_files",
+            "bronze_schema": f"{TEAM_PREFIX}_5k_clean_bronze",
+        },
+        "napa_5k_tainted": {
+            "raw_volume_path": f"/Volumes/{CATALOG}/{TEAM_PREFIX}_5k_tainted_raw/napa_files",
+            "bronze_schema": f"{TEAM_PREFIX}_5k_tainted_bronze",
+        },
+        "napa_50k_clean": {
+            "raw_volume_path": f"/Volumes/{CATALOG}/{TEAM_PREFIX}_50k_clean_raw/napa_files",
+            "bronze_schema": f"{TEAM_PREFIX}_50k_clean_bronze",
+        },
+        "napa_50k_tainted": {
+            "raw_volume_path": f"/Volumes/{CATALOG}/{TEAM_PREFIX}_50k_tainted_raw/napa_files",
+            "bronze_schema": f"{TEAM_PREFIX}_50k_tainted_bronze",
+        },
+        "napa_250k_production": {
+            "raw_volume_path": f"/Volumes/{CATALOG}/{TEAM_PREFIX}_250k_raw/napa_files",
+            "bronze_schema": f"{TEAM_PREFIX}_250k_bronze",
+        },
+    }
 
 # COMMAND ----------
 import json

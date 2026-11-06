@@ -1,16 +1,12 @@
-# Planning example for all layers; it is not the generated pipelines' runtime configuration or a second runtime source of truth.
+# Planning example for all layers; it is not the supplied jobs' runtime configuration or a second runtime source of truth.
 # Copy this file to dataset_config.local.yml and update values for your environment if the team uses it.
 # Do not commit local configuration files that contain personal paths or workspace-specific settings.
 # Replace the catalog, Raw Volume, and schema placeholders with team-owned Unity Catalog values.
-# Mapping: shared_operations_schema -> generated runtime objects.operations_schema.
-# Every generated profile sets schemas.operations: ${objects.operations_schema}; all five profiles must resolve to this one value.
-# Runtime configuration validation must reject any conflicting or unresolved operations namespace.
+# Bronze and Silver runtime values come from databricks.yml job parameters and notebook defaults.
 
 active_dataset: napa_5k_clean
 
 catalog: replace_with_catalog
-shared_operations_schema: replace_with_prefix_napa_ops
-
 available_datasets:
   napa_5k_clean:
     description: 5K development dataset with clean source data.
@@ -20,7 +16,6 @@ available_datasets:
     manifest_file: manifest.json
     bronze_schema: replace_with_prefix_napa_5k_clean_bronze
     silver_schema: replace_with_prefix_napa_5k_clean_silver
-    silver_reject_schema: replace_with_prefix_napa_5k_clean_silver_reject
     gold_schema: replace_with_prefix_napa_5k_clean_gold
 
   napa_5k_tainted:
@@ -31,7 +26,6 @@ available_datasets:
     manifest_file: manifest.json
     bronze_schema: replace_with_prefix_napa_5k_tainted_bronze
     silver_schema: replace_with_prefix_napa_5k_tainted_silver
-    silver_reject_schema: replace_with_prefix_napa_5k_tainted_silver_reject
     gold_schema: replace_with_prefix_napa_5k_tainted_gold
 
   napa_50k_clean:
@@ -42,7 +36,6 @@ available_datasets:
     manifest_file: manifest.json
     bronze_schema: replace_with_prefix_napa_50k_clean_bronze
     silver_schema: replace_with_prefix_napa_50k_clean_silver
-    silver_reject_schema: replace_with_prefix_napa_50k_clean_silver_reject
     gold_schema: replace_with_prefix_napa_50k_clean_gold
 
   napa_50k_tainted:
@@ -53,7 +46,6 @@ available_datasets:
     manifest_file: manifest.json
     bronze_schema: replace_with_prefix_napa_50k_tainted_bronze
     silver_schema: replace_with_prefix_napa_50k_tainted_silver
-    silver_reject_schema: replace_with_prefix_napa_50k_tainted_silver_reject
     gold_schema: replace_with_prefix_napa_50k_tainted_gold
 
   napa_250k_production:
@@ -64,5 +56,4 @@ available_datasets:
     manifest_file: manifest.json
     bronze_schema: replace_with_prefix_napa_250k_bronze
     silver_schema: replace_with_prefix_napa_250k_silver
-    silver_reject_schema: replace_with_prefix_napa_250k_silver_reject
     gold_schema: replace_with_prefix_napa_250k_production_gold

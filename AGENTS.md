@@ -8,19 +8,19 @@ Help the team build a repeatable Raw-to-Bronze-to-Silver data platform, design i
 
 Students own the analytical strategy, final recommendations, and submitted work. The AI assistant can write substantial code, tests, notebooks, and presentations **at the team's direction**, but must explain assumptions and results. Do not assume a completed implementation or another team's solution is available.
 
-The instructor supplies the student-facing Bronze bootstrap utility. Students use it to create and validate Bronze tables without constructing an ingestion pipeline. Instructor-provided Silver specifications and a revised Silver prompt are forthcoming. Students author their own Silver-to-Gold prompts and own the Gold analytical design.
+The instructor supplies the student-facing Bronze and Silver bootstrap notebooks. Students deploy and run them as two independent manual jobs, inspect their data and quality evidence, and then author their own Silver-to-Gold prompts and Gold analytical design. Silver modifications are optional and must remain consistent with `docs/silver_specification.md`.
 
 ## 2. Sources of truth
 
 Read the documents that actually exist in the repository before acting:
 
 1. **NAPA RFP and course assignment:** business requirements, eligibility, deliverables, milestones, and assessment criteria.
-2. **`notebooks/00_bootstrap_bronze.py` and `docs/bronze_bootstrap_guide.md`:** supplied Bronze utility and operating guidance.
-3. **Instructor-provided Silver specifications and revised prompt:** forthcoming Silver construction guidance when published.
+2. **`docs/bootstrap_guide.md`:** configuration, deployment, execution, and inspection for both supplied jobs.
+3. **`notebooks/00_bootstrap_bronze.py`, `notebooks/01_build_silver.py`, `docs/bronze_bootstrap_guide.md`, and `docs/silver_specification.md`:** supplied implementation and detailed layer contracts.
 4. **Delivered Parquet files and colocated `manifest.json`:** physical source and release evidence.
 5. **README, existing code/configuration/tests, and team decisions:** implementation context.
 
-Find the actual locations of these files; do not assume a particular folder layout. Do not invent Silver requirements while the revised guidance is forthcoming. If a genuine conflict appears, explain it to the team and seek direction before changing affected behavior.
+Find the actual locations of these files; do not assume a particular folder layout. Do not replace or weaken the supplied Bronze or Silver contracts. If a genuine conflict appears, explain it to the team and seek direction before changing affected behavior.
 
 ## 3. Working with the team
 
@@ -45,12 +45,12 @@ The intended flow is:
 Delivered Parquet + manifest.json
   -> Raw Volume
   -> Bronze Delta tables (supplied bootstrap notebook)
-  -> Silver Delta tables + rejects and quality evidence (revised guidance forthcoming)
+  -> Silver Delta tables + rejects and quality evidence (supplied bootstrap)
   -> Gold features, analytics, comparisons, and rankings (team-designed)
   -> roster recommendations, development camp, and RFP presentation
 ```
 
-Use the **same supplied Bronze bootstrap notebook** for all five independent, full-refresh dataset profiles. Use the forthcoming Silver guidance for the shared Silver implementation. The `dataset_profile` values, in recommended test order, are:
+Use the **same supplied Bronze bootstrap and the same supplied Silver bootstrap** for all five independent, full-refresh dataset profiles. The `dataset_profile` values, in recommended test order, are:
 
 1. `napa_5k_clean`
 2. `napa_5k_tainted`
@@ -66,7 +66,7 @@ For each profile, build and validate Bronze before running Silver. The productio
 
 **Bronze:** Use `notebooks/00_bootstrap_bronze.py` according to `docs/bronze_bootstrap_guide.md`. Students create and populate the Raw Volume; the notebook verifies but never modifies its files. The utility preserves every source record and business column, including duplicate logical keys and invalid values, appends the prescribed metadata, and reconciles manifest, Raw, and Bronze counts. Do not cleanse or engineer business features in Bronze. Keep `existing_table_action = "fail"` for normal use; follow the guide's Danger Zone only for an intentional reload.
 
-**Silver:** Instructor-provided Silver specifications and a revised construction prompt are forthcoming. Do not implement or infer a replacement Silver contract until that guidance is available. Continue to preserve source attributes, historical timing, and data-quality evidence needed for the revised workflow.
+**Silver:** Use `notebooks/01_build_silver.py` and `docs/silver_specification.md` after the selected Bronze profile reports `OVERALL PASS`. The bootstrap standardizes accepted records, writes per-source rejects, applies exactly the 25 approved DQ rules, and persists `silver_data_quality_summary`. Silver changes are optional; document and review any proposed contract change before editing the notebook.
 
 **Time matters:** Preserve the manifest-derived snapshot date and actual historical event dates. Current-state age/status may use the snapshot date; historical age, rating, and membership analysis must use the appropriate event-time evidence. Never apply a later value retroactively or invent missing history.
 
@@ -110,11 +110,11 @@ The published RFP controls exact roster sizes, eligibility, and number of altern
 - Preserve the existing bundle includes and other team work when adding jobs. Never use broad deletion or `bundle destroy` as routine troubleshooting.
 - Do not commit full NAPA datasets, Delta storage, credentials, tokens, `.env` secrets, or private workspace paths to the public repository.
 
-For Bronze, configure and run `notebooks/00_bootstrap_bronze.py` directly in Databricks Free Edition according to `docs/bronze_bootstrap_guide.md`. Follow later instructor guidance for Silver deployment and execution.
+Configure, validate, deploy, and manually run the two independent Asset Bundle jobs according to `docs/bootstrap_guide.md`. Run `napa_bronze_bootstrap`, inspect Bronze, then run `napa_silver_bootstrap` and inspect accepted, rejected, and DQ-summary evidence.
 
 ## 9. Validation and completion
 
-Follow the staged profile sequence in Section 4. At every Bronze profile, record table/count reconciliation and validation results. Follow the forthcoming revised Silver guidance for Silver evidence. Keep local checks distinct from controlled live execution in Databricks Free Edition, and never claim a test passed unless it ran.
+Follow the staged profile sequence in Section 4. At every profile, record Bronze table/count reconciliation and Silver accepted/rejected/DQ-summary results. Keep local checks distinct from controlled live execution in Databricks Free Edition, and never claim a test passed unless it ran.
 
 Before presenting Gold conclusions, confirm data lineage, valid joins and eligibility, correct historical dates, interpretable comparisons, and reproducibility from production Silver. Performance optimization and elaborate CI/CD are outside the required scope unless the team explicitly elects to explore them.
 
@@ -128,4 +128,4 @@ Decisions: assumptions or choices for the team
 Remaining: limitations and next steps
 ```
 
-**Guiding rule:** Let the detailed prompts specify how to construct Bronze and Silver. Let the students specify what Gold should accomplish. Help them implement, validate, understand, and defend the resulting solution.
+**Guiding rule:** Let the supplied notebooks and specifications govern Bronze and Silver. Let the students specify what Gold should accomplish. Help them implement, validate, understand, and defend the resulting solution.

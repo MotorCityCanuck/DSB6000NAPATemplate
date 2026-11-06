@@ -2,7 +2,7 @@
 
 **Purpose:** Maintain traceable evidence for the flow **Raw → Bronze → Silver → Gold → Olympic Recommendations**. Lineage supports reproducibility, governance, validation, and defensible business recommendations by connecting each output to its source data, processing rules, quality evidence, and execution record.
 
-The Bronze and Silver entries below describe the supplied construction specifications. They are not proof that a team's generated code or deployed Databricks resources conform to those specifications.
+The Bronze and Silver entries below describe the supplied bootstrap contracts. They are not proof that a team's deployed Databricks resources conform to those contracts.
 
 ## Dataset Profiles and Naming
 
@@ -14,15 +14,15 @@ The same parameterized engineering lineage applies independently to all five ful
 - `napa_50k_tainted`
 - `napa_250k_production`
 
-Resolve `<catalog>`, `<raw_schema>`, `<bronze_schema>`, `<silver_schema>`, `<silver_reject_schema>`, and `<team_prefix>_ops` from team configuration. Record fully qualified deployed names during verification; do not substitute illustrative defaults for observed resources.
+Resolve `<catalog>`, `<raw_schema>`, `<bronze_schema>`, and `<silver_schema>` from team configuration. Record fully qualified deployed names during verification; do not substitute illustrative defaults for observed resources.
 
-## Expected Lineage — Based on Supplied Construction Specifications
+## Expected Lineage — Based on Supplied Bootstraps
 
 ### Raw to Bronze
 
 The supplied Bronze notebook and operating guide govern this layer. Each selected profile supplies 13 Parquet files and a colocated `manifest.json`. The manifest is delivery and validation evidence, not a Bronze table.
 
-For every source, Bronze retains each successfully ingested record and all business columns in source order, including duplicate logical keys and invalid values, and appends the ten prescribed operational metadata columns. Source-designated keys are lineage metadata, not physically enforced uniqueness constraints. Bronze performs no business cleansing, filtering, joins, sorting, deduplication, referential-integrity enforcement, or feature engineering. Publication is a selected-profile full refresh initialized by clearing only that profile's prior Bronze output.
+For every source, Bronze retains each successfully ingested record and all business columns in source order, including duplicate logical keys and invalid values, and appends the ten prescribed metadata columns. Source-designated keys are lineage metadata, not physically enforced uniqueness constraints. Bronze performs no business cleansing, filtering, joins, sorting, deduplication, referential-integrity enforcement, or feature engineering. The normal `fail` action protects existing tables; an intentional selected-profile reload uses `replace`.
 
 | Raw source file | Source profile | Bronze destination | Significant ingestion or preservation behavior | Mandatory certification and validation controls |
 |---|---|---|---|---|
@@ -40,47 +40,19 @@ For every source, Bronze retains each successfully ingested record and all busin
 | `match_games.parquet` | Any approved profile | `<catalog>.<bronze_schema>.match_games` | Raw-preserving copy with ingestion metadata appended | Same required readiness and reconciliation controls |
 | `monthly_batches.parquet` | Any approved profile | `<catalog>.<bronze_schema>.monthly_batches` | Raw-preserving copy with ingestion metadata appended | Same required readiness and reconciliation controls |
 
-Certification must fail when required inventory, manifest agreement, Parquet readability, checksum, count, ordered schema, or reconciliation requirements fail. Successful finalization requires all 13 expected Bronze tables and matching run evidence. A failed execution retains any tables already published for the selected profile, but those tables are incomplete diagnostic lineage rather than a certified release. The next execution may clear them during its selected-profile initialization reset. See the prompt for the exact metadata columns, build order, failure behavior, schema reset, audit tables, and acceptance tests.
-
-The shared operations schema also records Raw-to-Bronze lineage in `pipeline_runs`, `table_runs`, `schema_snapshots`, `reconciliation_results`, `manifest_validation_results`, and `run_messages`. `pipeline_runs.execution_type` distinguishes production ingestion (`RAW_TO_BRONZE`) from scoped operations diagnostics (`OPERATIONS_VALIDATION`) without changing the six-table architecture or operations namespace. `manifest_validation_results` links each structured file-existence, source-mapping, inventory, schema, row-count, checksum, readability, or other manifest comparison to `pipeline_run_id`, the selected `dataset_profile`, and an optional configured `source_table`. These tables preserve historical successful and failed run, source/target, manifest, schema, reconciliation, outcome, and diagnostic evidence across executions; they are not Bronze business tables. Before Silver consumption, filter to `RAW_TO_BRONZE`, ignore all operations-validation records, and require the latest production run for the selected profile to be terminal `SUCCEEDED` with complete all-`PASSED` manifest-validation evidence and lineage matching the current Bronze output. Missing, running, failed, ambiguous, incomplete, `FAILED`, or `ERROR` production evidence blocks Silver; validation success never authorizes it.
+The notebook reports one validation row per table and an overall result. Do not run Silver unless all 13 tables report `PASS` and the notebook reports `OVERALL PASS`. The student bootstrap does not create the legacy enterprise operations tables described elsewhere as reference material.
 
 ### Bronze to Silver
 
-The mapping below is retained as reference material. Instructor-provided Silver specifications and a revised prompt are forthcoming and will govern the active student Silver workflow when published.
+The supplied Silver notebook reads the 13 tables in the selected profile's Bronze schema and writes exactly 27 managed tables in that profile's Silver schema:
 
-Common mandatory controls apply to every mapping: preserve source-row multiplicity through validation; reject every occurrence of a duplicate non-null primary key; use safe conversions; retain diagnostic source values; resolve required parents against accepted Silver records; separate accepted and rejected occurrences; append prescribed metadata; and reconcile `Bronze = accepted + rejected`. Expected record-level defects do not independently fail execution, while missing evidence, technical errors, failed publication, or unexplained reconciliation differences do.
+- 13 accepted tables with the same names as their Bronze sources;
+- 13 rejection tables named `<source_table>_rejects`; and
+- `silver_data_quality_summary`.
 
-| Bronze source and required dependencies | Silver accepted and exception destinations | Important prescribed lineage | Mandatory quality controls |
-|---|---|---|---|
-| `monthly_batches` | `monthly_batches`; `monthly_batches_exceptions` | Normalize batch ID/type/status; safely parse dates and sequence; derive year, month, and quarter | Key, date, and sequence validation |
-| `regions` | `regions`; `regions_exceptions` | Normalize identifiers and geographic attributes; standardize country to USA/CAN | Key, name, and country validation |
-| `player_master` + accepted `regions` | `players`; `players_exceptions` | Normalize player attributes, dates, rating/confidence, country, status, and home region; derive snapshot age/group and active flag | Key, birth date, parent region, domains, and numeric conversion validation |
-| `clubs` + accepted `regions` | `clubs`; `clubs_exceptions` | Normalize club identity, region, country, and lifecycle dates; preserve specified club attributes | Key/name, parent region, country, date, and interval validation |
-| `teams` | `teams`; `teams_exceptions` | Preserve source team attributes; standardize category, identity, country, status, and lifecycle dates; derive snapshot age and active flag | Key, domain, date, interval, and release-boundary validation |
-| `player_registrations` + accepted `players` and populated `monthly_batches` | `player_registrations`; `player_registrations_exceptions` | Normalize registration/batch identifiers and dates; derive status, current flag, duration, and sequence | Key, parent, conversion, and interval validation |
-| `player_assessment_history` + accepted `players` and `monthly_batches` | `player_assessment_history`; `player_assessment_history_exceptions` | Normalize assessment identifiers, date/type, value, and confidence while preserving historical context | Key, parent, date boundary, numeric conversion, and required coverage validation |
-| `club_memberships` + accepted `players` and `clubs` | `club_memberships`; `club_memberships_exceptions` | Normalize membership intervals; derive duration/current flag; identify overlap warnings | Key, parent, date, interval, and overlap controls |
-| `team_memberships` + accepted `teams` and `players` | `team_memberships`; `team_memberships_exceptions` | Normalize membership intervals, role, and position; derive current flag and supported duration; identify overlap warnings | Key, parent, date, interval, position, and overlap controls |
-| `matches` + accepted `monthly_batches`/`regions`; Bronze `match_teams` for winner-side mapping | `matches`; `matches_exceptions` | Normalize match attributes/date/category; preserve persistent winner; derive winner side, completion, year, and month | Key, parent, date, winner mapping, contract, and snapshot-boundary validation |
-| `match_teams` + accepted `matches` and `teams` | `match_teams`; `match_teams_exceptions` | Normalize side and pre-match rating; inherit match context; derive winner and side-cardinality warning flags | Key, parent, side, rating, and match-structure validation |
-| `match_team_players` + accepted `match_teams` and `players`; membership history for warning evidence | `match_team_players`; `match_team_players_exceptions` | Preserve match-time rating; normalize position/rating; inherit match context; derive event-time age/group and membership-history warning | Key, parent, position/rating, participant-cardinality, cross-side, and event-time controls |
-| `match_games` + accepted `matches` | `match_games`; `match_games_exceptions` | Safely convert game/score fields; derive score margin, total points, close-game, and supported extended-game fields | Key, parent, game number, scores, winner consistency, optional target/win-by/share, and per-match game uniqueness controls |
+The notebook standardizes documented fields, derives the two approved age fields, applies exactly the 25 record-level rules in `docs/silver_specification.md`, and reconciles each source as `Bronze = accepted + rejected`. Reject rows retain source values and reason arrays. Expected data defects may produce rejects without failing the job; technical or reconciliation failures remain visible.
 
-The prompt also requires 11 cross-table checks and run-linked evidence for release, key, relationship, match, game, temporal, historical, and eligibility quality. Refer to the prompt for exact rule order, identifiers, severities, source contracts, and temporal behavior rather than reproducing those specifications here.
-
-#### Prescribed Silver convenience views
-
-| View | Expected lineage and purpose |
-|---|---|
-| `vw_players_current` | Filter accepted `players` to rows with a true current active flag |
-| `vw_current_team_memberships` | Filter accepted `team_memberships` to true current membership rows |
-| `vw_team_rosters` | Combine teams, current memberships, and players to expose roster cardinality and member structures; it does not recommend teams |
-| `vw_match_results` | Combine accepted matches, sides, games, regions, and batches for match-result context |
-| `vw_player_match_history` | Combine accepted participants, sides, matches, players, and opponents for historical participation context |
-
-#### Prescribed Silver operational evidence
-
-The shared `<team_prefix>_ops` schema records `b2s_pipeline_runs`, `b2s_table_runs`, `b2s_quality_results`, `b2s_reconciliation_results`, `b2s_schema_snapshots`, and `b2s_run_messages`. These tables provide run, quality, reconciliation, schema, and diagnostic lineage; they are not Gold analytical outputs.
+Record the job run, fully qualified schemas, accepted/rejected counts, `TABLE_TOTAL` reconciliation rows, and `REASON_TOTAL` rule evidence. The supplied Silver baseline creates no convenience views, separate reject schema, or enterprise operations tables.
 
 ## Verified Lineage — Student Record
 
