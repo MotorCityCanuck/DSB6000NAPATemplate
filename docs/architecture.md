@@ -4,7 +4,7 @@
 
 This student-maintained document describes the high-level architecture of the NAPA Olympic Analytics Platform: its processing layers, technology responsibilities, configurable namespaces, deployment approach, and team decisions. It consolidates the useful layer-design guidance previously separated from the main architecture record.
 
-This document does not replace the supplied Bronze notebook and guide or the forthcoming revised Silver guidance. The official RFP and Canvas assignments remain authoritative for business deliverables and eligibility requirements.
+This document does not replace the supplied bootstrap notebooks, guides, or Silver specification. The official RFP and Canvas assignments remain authoritative for business deliverables and eligibility requirements.
 
 ## 2. System Context and Technology Responsibilities
 
@@ -24,7 +24,7 @@ Delivered Parquet files + manifest.json
 | Unity Catalog | Configurable catalog, schemas, Volumes, managed tables, views, and operational evidence with profile isolation |
 | Databricks CLI and Asset Bundles | Individual authentication and manual validation, deployment, and execution of approved team changes |
 | Reusable source modules and SQL | Testable implementation of prescribed engineering behavior and team-designed analytics |
-| Notebooks or scripts | The supplied notebook implements Bronze; Silver structure will follow the revised instructor guidance |
+| Notebooks or scripts | The two supplied notebooks implement the Assignment 10 Bronze and Silver foundation; students design Gold |
 | AI-assisted development tools | Generate and explain work at team direction; students review, test, approve, and defend the results |
 
 ## 3. Five-Profile Dataset Strategy
@@ -47,12 +47,12 @@ Profile selection occurs through the supplied Bronze notebook's widget and confi
 |---|---|---|---|
 | Raw | The 13 supplied Parquet files and colocated `manifest.json` in the selected Unity Catalog Volume | Preserve the delivered package unchanged; the Bronze bootstrap validates its inventory and manifest | Prescribed engineering foundation |
 | Bronze | Raw-preserving managed Delta representation with prescribed ingestion metadata | Preserve every Raw record one-for-one, including duplicate logical keys and business defects; reconcile manifest, Raw, and Bronze counts; perform no business cleansing or feature engineering | Supplied by `notebooks/00_bootstrap_bronze.py` and `docs/bronze_bootstrap_guide.md` |
-| Silver | Standardized, quality-controlled analytical foundation | Follow the instructor-provided Silver specifications and revised prompt when published; do not fabricate corrections or requirements | Revised guidance forthcoming |
+| Silver | Standardized, quality-controlled analytical foundation | Use the supplied notebook and specification: 13 accepted tables, 13 reject tables, one DQ summary, and 25 approved rules | Supplied by `notebooks/01_build_silver.py` and `docs/silver_specification.md` |
 | Gold | Decision-ready features, measures, comparisons, analytical products, and recommendation evidence | Team defines analytical quality controls and documents assumptions, limitations, uncertainty, and lineage without rewriting upstream evidence | Team-defined |
 
-The supplied Bronze notebook and guide define the active student Bronze workflow. Revised Silver guidance is forthcoming. This architecture records only the layer boundaries.
+The supplied notebooks, guides, and Silver specification define the active student Bronze and Silver workflow. This architecture records only the layer boundaries.
 
-Source-designated Raw/Bronze keys describe logical entity identity and relationships; they do not impose physical uniqueness in Bronze. Normal bootstrap use keeps `existing_table_action = "fail"`; intentional reloads replace only the selected expected Bronze tables as documented in the guide. The bootstrap does not create enterprise operational evidence. Silver validation and enforcement behavior will be defined by the forthcoming revised guidance.
+Source-designated Raw/Bronze keys describe logical entity identity and relationships; they do not impose physical uniqueness in Bronze. Normal bootstrap use keeps `existing_table_action = "fail"`; intentional reloads replace only the selected profile's expected tables as documented in the guides. The student bootstraps do not create the superseded enterprise operational evidence structures.
 
 ## 5. Unity Catalog Namespace and Storage Architecture
 
@@ -63,25 +63,24 @@ Catalog and team prefix values are configurable. The patterns below are the cons
 | Raw schema | `<team_prefix>_<scale>_<condition>_raw` | `<team_prefix>_250k_raw` |
 | Raw Volume path | `/Volumes/<catalog>/<team_prefix>_<scale>_<condition>_raw/napa_files` | `/Volumes/<catalog>/<team_prefix>_250k_raw/napa_files` |
 | Bronze schema | `<team_prefix>_<scale>_<condition>_bronze` | `<team_prefix>_250k_bronze` |
-| Silver accepted schema | `<team_prefix>_<scale>_<condition>_silver` | `<team_prefix>_250k_silver` |
-| Silver reject schema | `<team_prefix>_<scale>_<condition>_silver_reject` | `<team_prefix>_250k_silver_reject` |
+| Silver accepted, rejects, and DQ summary | `<team_prefix>_<scale>_<condition>_silver` | `<team_prefix>_250k_silver` |
 
-Raw, Bronze, Silver, and Silver-reject namespaces are isolated by profile. The one shared operations schema follows `<team_prefix>_ops`; no separate operations-validation schema is used. `config/dataset_config.example.yml` supplies configurable placeholders for these destinations and a `gold_schema` for each profile.
+Raw, Bronze, and Silver namespaces are isolated by profile. Each Silver schema contains accepted tables, `<source>_rejects` tables, and `silver_data_quality_summary`. Existing configuration examples may retain broader legacy placeholders; the bootstrap notebooks and `docs/silver_specification.md` govern Assignment 10 outputs.
 
-Gold must remain separate from engineering evidence, but its physical organization is a team decision. Teams may use the configured Gold schema placeholders or document another assignment-consistent, team-owned organization; the supplied Bronze workflow and forthcoming Silver guidance do not prescribe Gold tables or models.
+Gold must remain separate from engineering evidence, but its physical organization is a team decision. Teams may use configured Gold schema placeholders or document another assignment-consistent, team-owned organization; the supplied bootstraps do not prescribe Gold tables or models.
 
 ## 6. Application Structure and Deployment Approach
 
 - Keep environment and profile values in configuration rather than source code.
 - Reuse the same configured implementation across all profiles.
-- Use the supplied Bronze notebook as documented and follow the revised Silver boundaries when published.
+- Use the two supplied bootstrap notebooks and preserve their documented Bronze/Silver boundaries.
 - Keep implementation, configuration templates, tests, and documentation in GitHub; keep source data, secrets, local authentication, and generated storage outside the repository.
-- Use `databricks.yml` as the bundle root. It defines bundle `napa_olympic_analytics` and one default development target. The reusable target omits a workspace host so the explicitly selected local Databricks CLI profile supplies team-specific host and authentication; executable resources are added only when implementing the prescribed workflows.
+- Use `databricks.yml` as the bundle root. It defines neutral bundle `napa_student_bootstraps`, the `dev` target, and exactly two independent manually runnable jobs. It omits a workspace host so the selected local Databricks CLI profile supplies team-specific host and authentication.
 - Team members authenticate individually through the Databricks CLI. The team designates a deployment coordinator to manually validate and deploy approved changes from its GitHub `main` branch.
 - Do not assume GitHub Actions, production deployment targets, paid clusters, or embedded credentials.
 - Target Databricks Free Edition serverless with the active Databricks SparkSession, explicit schemas, Delta-compatible operations, and documented APIs. Prefer supported SQL metadata inspection such as `SHOW CATALOGS`; do not rely on `spark.catalog.catalogExists()`, custom clusters, or test doubles that conceal unsupported runtime calls.
 
-Deployment success confirms resource deployment, not data correctness. Runtime acceptance requires the applicable prompt's validation evidence.
+Deployment success confirms resource deployment, not data correctness. Runtime acceptance requires the notebooks' validation and DQ evidence.
 
 ## 7. Evidence, Reproducibility, and Validation
 
@@ -122,8 +121,8 @@ Milestones represent stages of platform and analytical maturity; no milestone co
 | Keep enterprise operational infrastructure out of the student Bronze workflow | Simplified course design | Established |
 | Require students to prepare Raw Volumes and configure team-owned Bronze schemas | Supplied Bronze utility | Established |
 | Store Raw and managed layer outputs in configurable Unity Catalog namespaces | Dataset configuration and Bronze guide | Established |
-| Treat the supplied Bronze guidance as active and the revised Silver guidance as forthcoming | `AGENTS.md` and README | Established |
-| Run the supplied Bronze notebook directly in Databricks Free Edition | Bronze bootstrap guide | Established |
+| Treat both supplied bootstraps and the Silver specification as the active Assignment 10 foundation | `AGENTS.md`, README, and bootstrap guide | Established |
+| Manually run Bronze, inspect, then manually run Silver and inspect DQ evidence | Bootstrap guide | Established |
 | Keep Gold analytical architecture team-owned and separate from engineering evidence | Assignment boundary and `AGENTS.md` | Established |
 
 ### Team decision record
@@ -148,5 +147,5 @@ Record only choices that remain open to the team. Add rows as decisions are made
 | `docs/dataset_specification.md` | Dataset profiles, source-package contents, record grains, relationships, and release conventions |
 | `notebooks/00_bootstrap_bronze.py` | Supplied student Bronze utility |
 | `docs/bronze_bootstrap_guide.md` | Bronze configuration, operation, validation, and reload safety |
-| Revised Silver prompt | Forthcoming instructor-provided Silver construction guidance |
+| `notebooks/01_build_silver.py` and `docs/silver_specification.md` | Supplied Silver implementation, outputs, and 25 approved DQ rules |
 | Official RFP and Canvas assignments | Business requirements, eligibility, deliverables, and assessment authority |

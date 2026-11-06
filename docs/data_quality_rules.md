@@ -1,6 +1,6 @@
 # Data Quality Rules
 
-**Purpose:** This document helps teams track required engineering quality rules and any additional analytical checks they design. It is an evidence registry and planning aid; it does not replace the supplied Bronze workflow or forthcoming revised Silver guidance.
+**Purpose:** This document helps teams track required engineering quality rules and any additional analytical checks they design. It is an evidence registry and planning aid; it does not replace the supplied bootstrap notebooks or `docs/silver_specification.md`.
 
 ## Rule authority and categories
 
@@ -10,11 +10,11 @@
 
 The delivered Parquet files and colocated `manifest.json` must remain unchanged. Bronze preserves each successfully ingested source record one-for-one, including invalid values and duplicate logical keys, while adding only the prescribed operational metadata. Source-designated keys express logical identity but are not physically enforced as unique in Bronze. Quality remediation, duplicate-key rejection, referential-integrity enforcement, and required cascading rejection belong downstream and must never rewrite the Raw package.
 
-Production Raw-to-Bronze technical checks still validate readability, inventory, manifest agreement, schemas, checksums, counts, publication, and reconciliation. Every manifest/readiness comparison is retained in the configured operations schema's `manifest_validation_results` table with `PASSED`, `FAILED`, or `ERROR` status; required non-`PASSED` or missing evidence fails the `RAW_TO_BRONZE` execution. A failed production run retains this evidence and any selected-profile Bronze tables already published; those tables are diagnostic evidence, not a successful release. Silver preflight must filter to `execution_type = RAW_TO_BRONZE`, ignore `OPERATIONS_VALIDATION` records, and block incomplete production evidence, while the next production Bronze execution may clear only the Bronze output during its normal selected-profile initialization. Operations validation does not change these business-quality or production-ingestion rules.
+The Bronze notebook validates the Raw package and manifest, source readability and schema, row counts, Bronze structure, and manifest/Raw/Bronze reconciliation. Its displayed per-table results and `OVERALL PASS` or `OVERALL FAIL` are the Assignment 10 evidence; the student bootstrap does not create legacy enterprise operations tables.
 
 ### Mandatory Silver engineering requirements
 
-Instructor-provided Silver specifications and a revised prompt are forthcoming. Preserve the rules in this document as reference material, but do not infer or implement the revised Silver workflow until the instructor publishes it.
+The complete approved record-level rejection catalog is Section 8 of `docs/silver_specification.md`. It contains exactly 25 identifiers. The supplied notebook writes 13 accepted tables, 13 `<source>_rejects` tables, and `silver_data_quality_summary` in the selected profile's Silver schema.
 
 Expected record-level quality defects must be handled and evidenced as prescribed without being confused with technical pipeline failure. Teams must preserve required reject, reconciliation, and operational evidence and must not synthesize corrections for invalid source values.
 
@@ -38,7 +38,7 @@ Do not assume that a result from one profile proves the same result for another.
 
 ## Rule documentation standard
 
-Document mandatory and team-defined checks using the same traceable fields. For mandatory rules, cite the governing prompt and preserve its identifier, severity, disposition, and failure behavior.
+Document mandatory and team-defined checks using the same traceable fields. For mandatory rules, cite the governing notebook or specification and preserve its identifier, classification, disposition, and failure behavior.
 
 | Rule identifier | Category and authority | Applicable profiles | Processing layer | Description | Business or technical rationale | Validation method | Observed result and evidence | Treatment of failure | Downstream analytical impact |
 |---|---|---|---|---|---|---|---|---|---|

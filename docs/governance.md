@@ -4,8 +4,8 @@
 
 ## Authority and boundaries
 
-- The supplied [Bronze bootstrap guide](bronze_bootstrap_guide.md) governs operation and validation of the student Bronze utility.
-- Instructor-provided Silver specifications and a revised prompt are forthcoming.
+- The supplied [bootstrap guide](bootstrap_guide.md) governs deployment and manual execution of the two student jobs.
+- The [Bronze guide](bronze_bootstrap_guide.md) and [Silver specification](silver_specification.md) govern their layer contracts and validation evidence.
 - The official RFP and Canvas assignments govern business deliverables, eligibility, milestones, and submissions.
 - The team controls Gold architecture, analytical methods, validation choices, and recommendation logic. Team decisions must remain supported by evidence and must not rewrite Raw, Bronze, Silver, rejection, or audit evidence.
 
@@ -94,4 +94,4 @@ Record only decisions the team has made or questions that require follow-up. Do 
 | Quality findings and downstream impact | [`docs/data_quality_report.md`](data_quality_report.md) |
 | AI-assisted work and human review | [`docs/ai_usage_summary.md`](ai_usage_summary.md) |
 | Bronze student workflow | [`notebooks/00_bootstrap_bronze.py`](../notebooks/00_bootstrap_bronze.py) and [`docs/bronze_bootstrap_guide.md`](bronze_bootstrap_guide.md) |
-| Silver engineering requirements | Revised instructor specifications and prompt forthcoming |
+| Silver engineering requirements | [`notebooks/01_build_silver.py`](../notebooks/01_build_silver.py) and [`docs/silver_specification.md`](silver_specification.md) |

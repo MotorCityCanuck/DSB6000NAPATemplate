@@ -4,7 +4,9 @@
 
 This data dictionary is the version-controlled business and technical field reference for the NAPA Olympic Analytics Platform. It supports student review, AI-assisted development, and pull-request-based maintenance of definitions, interpretations, and unresolved questions. Consulting teams also use it to document their own Gold analytical features and measures.
 
-This document does not replace the supplied Bronze bootstrap notebook and guide or the forthcoming revised Silver guidance. The delivered Parquet files and colocated `manifest.json` provide physical source evidence; executed Databricks objects and validation evidence establish implementation results. Do not present a specification or assumption as verified physical fact.
+This document does not replace the supplied bootstrap notebooks, guides, or `docs/silver_specification.md`. The delivered Parquet files and colocated `manifest.json` provide physical source evidence; executed Databricks objects and validation evidence establish implementation results. Do not present a specification or assumption as verified physical fact.
+
+**Assignment 10 authority:** the supplied notebooks and `docs/silver_specification.md` govern current Bronze and Silver behavior. The enterprise operations, convenience-view, separate reject-schema, and prior Silver-contract sections retained below are historical reference only; students must not build or deploy them for Assignment 10.
 
 ## Verification Status Labels
 
@@ -30,7 +32,7 @@ No physical source schema is claimed as verified by this registry alone. Record 
 
 ## Source-Table Registry
 
-The purposes and grains below come from `docs/dataset_specification.md`. Keys and relationships are retained from the supplied case-study specifications. At the Raw and Bronze layers these are source-designated logical keys: they describe intended identity and relationships but do not create or imply a physically enforced uniqueness constraint. Duplicate key values remain valid ingestion occurrences. Revised Silver handling will be governed by the forthcoming instructor guidance.
+The purposes and grains below come from `docs/dataset_specification.md`. Keys and relationships are retained from the supplied case-study specifications. At the Raw and Bronze layers these are source-designated logical keys: they describe intended identity and relationships but do not create or imply a physically enforced uniqueness constraint. Duplicate key values remain valid ingestion occurrences. Current Silver handling is defined by `docs/silver_specification.md`.
 
 | Source filename | Business purpose | Record grain | Source-designated logical key | Important relationships | Applicable profiles | Verification status |
 |---|---|---|---|---|---|---|
@@ -50,7 +52,7 @@ The purposes and grains below come from `docs/dataset_specification.md`. Keys an
 
 ## Source Field Dictionary
 
-The following field contracts are retained from the prior Silver specification and apply to all five dataset profiles. They are **Prescribed**, not physically verified. Type families are stated only where that specification defined them. **Unresolved** identifies a meaning, type, format, domain, unit, or constraint that the authoritative sources do not establish; it must not be inferred from a field name. The forthcoming revised Silver guidance will govern implementation.
+The following source field contracts are retained as reference for all five dataset profiles. They are **Prescribed**, not physically verified. Type families are stated only where the prior reference defined them. **Unresolved** identifies a meaning, type, format, domain, unit, or constraint that the authoritative sources do not establish; it must not be inferred from a field name. The current Silver specification governs implementation.
 
 ### `regions`
 
@@ -310,9 +312,9 @@ This section does not define the separate Raw-to-Bronze operations tables (`pipe
 
 The supplied Bronze workflow does not prescribe comprehensive `NOT NULL` constraints for the ten metadata columns. It permits a missing source-file modification timestamp to remain null and captures source-file size when available. Any remaining physical details are **Unresolved** until clarified by an authoritative specification or verified implementation evidence.
 
-## Bronze Operational Evidence Contracts
+## Legacy Bronze Operational Evidence Contracts — Reference Only
 
-Before these evidence tables are initialized, the pipeline automatically initializes only the schemas required by the selected execution type: the shared operations schema for `OPERATIONS_VALIDATION`, or the selected profile's Raw and Bronze schemas plus shared operations for `RAW_TO_BRONZE`. This idempotent, non-destructive step uses validated configured identifiers and `CREATE SCHEMA IF NOT EXISTS`. It does not create a Raw Volume, create any of the 13 Bronze tables, alter existing schemas, or authorize Bronze reset.
+The paragraphs and tables in this section document a superseded enterprise workflow. They are not instructions for the supplied student bootstrap and must not be implemented for Assignment 10.
 
 The operations-table contracts below are retained as legacy reference material from the superseded enterprise workflow. The student Bronze bootstrap does not create these tables. Their exact deployed catalog and schema have not been physically verified.
 
@@ -445,11 +447,11 @@ The table is append-only across executions. It records successful comparisons as
 
 The Bronze bootstrap creates no rejected-record or defect-row table: Bronze preserves all source rows and does not apply business-rule rejection. The notebook reports manifest, Raw, and Bronze validation results directly. This dictionary retains broader evidence definitions as reference material; the notebook and its guide govern the active student Bronze workflow.
 
-A Raw-to-Bronze failure does not delete tables already published by that execution. Those tables retain their normal Bronze definitions and `_pipeline_run_id` lineage but constitute incomplete diagnostic output, not a certified release. The terminal `pipeline_runs` outcome and related table/reconciliation evidence distinguish success from failure. Silver must first filter to `execution_type = RAW_TO_BRONZE`, ignore all `OPERATIONS_VALIDATION` records, and reject the latest selected-profile production execution unless its complete evidence establishes terminal `SUCCEEDED`.
+The legacy workflow's failure/readiness behavior described here does not apply to the supplied bootstraps. For Assignment 10, run Silver only after the Bronze notebook reports `OVERALL PASS`.
 
 ## Silver Entities and Field Definitions
 
-This section is retained as Silver reference material pending the instructor-provided revised specifications and prompt. These are **Prescribed** contracts, not physically or implementation-verified schemas. They apply independently to all five dataset profiles.
+This section is retained as historical Silver reference material. It does not describe the current supplied bootstrap schema; use `docs/silver_specification.md` for Assignment 10 implementation.
 
 Appendix B requires every accepted table to contain its ordered business fields followed by the seven shared metadata fields documented below. The prompt states broad type families but requires integration schema tests for exact Spark types and nullability. Accordingly, “required accepted value” describes logical acceptance behavior, not a claimed physical `NOT NULL` constraint; all unprovided physical nullability remains **Unresolved**.
 
@@ -768,14 +770,14 @@ These seven fields follow each table's ordered business fields. Their exact phys
 
 ### Accepted-field boundaries and unresolved details
 
-The tables above document accepted Silver fields only. Exception tables, operational evidence, convenience views, detailed rule ordering, SQL, and execution procedures remain outside this task and will be governed by the forthcoming revised Silver guidance.
+The tables above are historical reference only. Current accepted fields, rejects, rule ordering, and execution behavior are governed by `docs/silver_specification.md` and `notebooks/01_build_silver.py`.
 
 Appendix B supplies exact field names and order but deliberately does not establish exact Spark nullability or every physical type. Supported aliases that are absent from the schema 1.6 physical source contract are compatibility inputs, not additional required source columns. Canonical fields such as `province_state`, `display_name`, `registration_type`, and `player_role` therefore retain the prompt's prescribed output names while their populated-source availability and exact physical nullability remain unresolved until implementation verification. No field in this section is marked physically or implementation verified.
 
 
 ## Silver Exceptions and Operational Structures
 
-This task documents the previously prescribed Silver exception outputs only. The forthcoming revised Silver guidance will govern implementation. Silver operational evidence tables, grouped quality summaries, reconciliation, schema snapshots, and run metadata remain outside this section and will be documented separately.
+This section documents previously prescribed Silver exception outputs only. It is not an Assignment 10 build requirement. The current bootstrap writes `<source_table>_rejects` tables and `silver_data_quality_summary` in the selected Silver schema.
 
 ### Exception-output inventory
 
@@ -845,11 +847,11 @@ Rejected occurrences are excluded from the corresponding accepted Silver table a
 
 The values above are configurable placeholders, not verified deployed schemas. Accepted entities belong in the profile-specific `silver_schema`; exceptions belong in the corresponding profile-specific `silver_reject_schema`; shared operational evidence belongs in the separately configured `<team_prefix>_ops` schema. Rejected rows are not retained in accepted Silver tables, and exception tables are not substitutes for shared operational quality or reconciliation evidence.
 
-No exception schema, table, field, or behavior in this section is marked **Physically verified** or **Implementation verified**. Detailed implementation behavior will be governed by the forthcoming revised Silver guidance.
+No exception schema, table, field, or behavior in this historical section is marked **Physically verified** or **Implementation verified**. Use the current Silver specification and notebook for implementation behavior.
 
-## Silver Operational Evidence Contracts
+## Legacy Silver Operational Evidence Contracts — Reference Only
 
-The Silver operations-table contracts below are retained as legacy reference material from the superseded enterprise workflow. The forthcoming revised Silver guidance will determine whether any of these structures remain active.
+The Silver operations-table contracts below are retained as legacy reference material from the superseded enterprise workflow. They are not active Assignment 10 requirements and the supplied Silver bootstrap does not create them.
 
 All contracts below are **Prescribed** and have not been marked **Physically verified** or **Implementation verified**. The prompt specifies field order and broad type conventions, but delegates exact DDL and per-column nullability to the implementation. Consequently, physical nullability is **Unresolved** for every field. Required run context, statuses, and timestamps must not be silently null, but the prompt does not identify the exact `NOT NULL` columns. `threshold_value` also has no prescribed physical type and remains **Unresolved**.
 
@@ -989,7 +991,7 @@ Accepted Silver tables remain in the selected profile's configured `silver_schem
 | Runtime diagnostics | Propagated exceptions and job output provide failure context when managed audit storage is unavailable or incomplete | The prompt prescribes visible failure behavior but no separate log-table schema or retention contract | Prescribed concept; physical representation Unresolved |
 | Post-run validation record | Teams capture configuration hash, table/reject counts, reconciliation, quality evidence, views, and job/task status after each profile run | The prompt does not prescribe an additional managed table for this handoff record | Prescribed concept; physical representation Unresolved |
 
-Refer to the forthcoming revised Silver guidance for detailed rule logic and execution procedures. Refer to `docs/data_quality_report.md` for the team-maintained report of actual findings and downstream impacts.
+Refer to `docs/silver_specification.md` for current rule logic and execution procedures. Refer to `docs/data_quality_report.md` for the team-maintained report of actual findings and downstream impacts.
 
 ## Gold Analytical Definitions — Team Maintained
 

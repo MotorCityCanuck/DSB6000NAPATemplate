@@ -5,8 +5,8 @@ The `tests/` directory is reserved for implementation tests and student-develope
 ## Testing responsibilities
 
 - Bronze checks should verify the supplied bootstrap notebook's documented preservation and validation behavior.
-- Silver tests should follow the instructor-provided specifications and revised prompt when published.
-- Test coverage should address the five approved dataset profiles using the supplied Bronze workflow and forthcoming revised Silver guidance.
+- Silver tests should follow `docs/silver_specification.md` and the supplied `notebooks/01_build_silver.py` baseline.
+- Test coverage should address the five approved dataset profiles using the supplied Bronze and Silver workflows.
 - Students should develop additional Gold tests for their own analytical designs, features, metrics, and recommendations.
 - No particular Gold scoring, ranking, modeling, or selection method is prescribed.
 

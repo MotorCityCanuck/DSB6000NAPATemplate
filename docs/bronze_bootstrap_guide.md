@@ -1,5 +1,9 @@
 # NAPA Bronze Bootstrap Guide
 
+For the two-job Asset Bundle workflow and exact deployment commands, start with
+[`bootstrap_guide.md`](bootstrap_guide.md). This guide retains the detailed
+Bronze input and reload behavior.
+
 ## Purpose
 
 `notebooks/00_bootstrap_bronze.py` creates source-preserving Bronze Delta tables from the NAPA Parquet packages uploaded during Assignment 10. It is a teaching utility, not the instructor's production ingestion pipeline. It intentionally omits operational evidence tables, job orchestration, retries, and deployment infrastructure.
@@ -31,14 +35,11 @@ You do **not** need to recreate your GitHub repository, discard work, or repeat 
 
 Copy `notebooks/00_bootstrap_bronze.py` into the existing repository's `notebooks` folder. You may commit it through your team's normal review process or import/upload the file directly into Databricks. The notebook is also suitable for separate Canvas distribution.
 
-## Configure the notebook
+## Configure Bronze
 
-Open its first Python configuration cell and set:
+For the normal Asset Bundle workflow, pass `catalog` and `team_prefix` as documented in [`bootstrap_guide.md`](bootstrap_guide.md), select the `dataset_profiles` job parameter, and leave `existing_table_action=fail` for the first run. The job parameters override the notebook's neutral defaults.
 
-1. `CATALOG` to your Unity Catalog catalog, commonly `workspace` in Free Edition.
-2. `TEAM_PREFIX` to your team's namespace prefix.
-3. Review every `raw_volume_path` and `bronze_schema` in `PROFILE_CONFIG`.
-4. Leave `existing_table_action = "fail"` for the first run.
+Review every `raw_volume_path` and `bronze_schema` in `PROFILE_CONFIG`. Edit that mapping only if the team's approved Raw Volumes do not follow the standard naming pattern below. A direct interactive notebook run may instead set `CATALOG` and `TEAM_PREFIX` in the first configuration cell.
 
 The default paths follow the repository conventions:
 
@@ -53,6 +54,8 @@ The default paths follow the repository conventions:
 Change individual paths in `PROFILE_CONFIG` if your Assignment 10 Volumes use different approved locations.
 
 ## Run in Databricks Free Edition
+
+Normally, manually run the deployed `napa_bronze_bootstrap` job as shown in [`bootstrap_guide.md`](bootstrap_guide.md). For a direct interactive run or troubleshooting:
 
 1. Open the notebook in Databricks.
 2. Attach it to serverless compute.
@@ -120,6 +123,6 @@ For an intentional reload:
 
 Before writing, replace mode displays the selected profile and exact fully qualified destination schema. It overwrites only the selected profile's 13 expected Bronze tables. It does not intentionally drop schemas, modify Raw Parquet files, or delete unrelated tables.
 
-## Important limitation
+## Continue to Silver
 
-This bootstrap does not create the enterprise operational evidence required by the original instructor Silver readiness gate. A separately simplified Silver workflow is required for bootstrap-created tables. Do not modify or bypass the existing gate unless instructed as part of that separate course change.
+After the selected profile reports `OVERALL PASS`, inspect representative Bronze records and follow [`bootstrap_guide.md`](bootstrap_guide.md) to run the independent `napa_silver_bootstrap` job. The supplied Silver notebook is designed for these bootstrap-created Bronze tables; historical enterprise readiness gates are not part of the Assignment 10 student workflow.

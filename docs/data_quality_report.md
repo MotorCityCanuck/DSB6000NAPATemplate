@@ -1,6 +1,6 @@
 # Data Quality Report
 
-**Purpose:** Use this team-maintained template to record actual data quality observations, validation evidence, handling decisions, and effects on downstream analysis. It reports results; it does not redefine the supplied Bronze workflow or forthcoming revised Silver guidance.
+**Purpose:** Use this team-maintained template to record actual data quality observations, validation evidence, handling decisions, and effects on downstream analysis. It reports results; it does not redefine the supplied Bronze or Silver workflows.
 
 ## Reporting Scope
 
@@ -15,10 +15,10 @@ Create or update a report for each significant run and dataset profile:
 Record findings for the applicable Raw, Bronze, Silver, or Gold layer. Classify each check as one of the following:
 
 - **Mandatory Bronze:** Evidence from the supplied Bronze bootstrap validation.
-- **Mandatory Silver:** Evidence required by the forthcoming revised Silver guidance.
+- **Mandatory Silver:** Evidence from the supplied Silver bootstrap, reject tables, and `silver_data_quality_summary`.
 - **Team-defined analytical:** Additional checks selected by the team for its Gold features, analyses, or recommendations.
 
-The supplied Bronze workflow governs mandatory Bronze handling. Forthcoming revised Silver guidance will govern Silver handling. Team-defined checks must support the team's analytical design without prescribing a particular Gold model or method.
+The supplied notebooks and `docs/silver_specification.md` govern mandatory Bronze and Silver handling. Team-defined checks must support the team's analytical design without prescribing a particular Gold model or method.
 
 ## Execution Context
 

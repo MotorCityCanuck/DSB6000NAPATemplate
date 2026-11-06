@@ -1,9 +1,10 @@
 # Notebook Guide
 
-The `notebooks/` directory contains the supplied `00_bootstrap_bronze.py` utility and may also contain student-created Databricks notebooks.
+This directory contains two instructor-supplied Databricks notebooks:
 
-Use `00_bootstrap_bronze.py` with `docs/bronze_bootstrap_guide.md` to create and validate Bronze tables. Instructor-provided Silver specifications and a revised prompt are forthcoming.
+- `00_bootstrap_bronze.py` creates and validates source-preserving Bronze tables.
+- `01_build_silver.py` creates accepted Silver tables, per-source reject tables, and the persisted DQ summary defined in `docs/silver_specification.md`.
 
-Teams may also create notebooks for team-designed Gold analytics, executive evidence, or presentation support. Notebook names, Gold tables, analytical methods, and algorithms remain team-controlled.
+Follow `docs/bootstrap_guide.md`: manually run Bronze, inspect its results, then manually run Silver and inspect accepted, rejected, and quality-summary evidence. The jobs are independent and have no schedule or automatic chain.
 
-Run the supplied Bronze notebook directly in Databricks Free Edition as described by its guide. Preserve validation evidence and update the relevant lineage, runbook, and analytical documentation.
+Teams may add notebooks for team-designed Gold analytics, executive evidence, or presentation support. Gold tables, methods, and recommendation algorithms remain team-controlled.
